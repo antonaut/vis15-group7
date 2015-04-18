@@ -25,11 +25,6 @@ IMPLEMENT_GEOX_CLASS( AssignmentThree, 0)
     ADD_STRING_PROP(VectorfieldFilename, 0)
     ADD_FLOAT32_PROP(ArrowScale, 0)
     ADD_NOARGS_METHOD(AssignmentThree::DrawVectorField)
-
-    ADD_SEPARATOR("Texture")
-    ADD_STRING_PROP(ImageFilename, 0)
-    ADD_BOOLEAN_PROP(bColoredTexture, 0)
-    ADD_NOARGS_METHOD(AssignmentThree::DrawTexture)
 }
 
 QWidget* AssignmentThree::createViewer()
@@ -200,70 +195,4 @@ namespace
                        // next highest power of 2.
         return n;
     }
-}
-
-
-void AssignmentThree::DrawTexture()
-{
-    viewer->clear();
-
-    //Load the texture using Qt
-    QImage image(ImageFilename.c_str());
-
-    //Get its (original) dimensions. Used as bounds later.
-    const float fWidth = (float)image.width();
-    const float fHeight = (float)image.height();
-
-    //Resize to power-of-two and mirror.
-    image = image.mirrored().scaled(NextPOT(image.width()), NextPOT(image.height()));
-
-    //Get its new integer dimensions.
-    const int iWidth = image.width();
-    const int iHeight = image.height();
-
-    if (bColoredTexture)
-    {
-        //Create three color channels for the texture
-        //Each of them is represented using a scalar field
-        ScalarField2 Red;
-        Red.init(makeVector2f(-fWidth, -fHeight), makeVector2f(fWidth, fHeight), makeVector2ui(iWidth, iHeight));
-        ScalarField2 Green;
-        Green.init(makeVector2f(-fWidth, -fHeight), makeVector2f(fWidth, fHeight), makeVector2ui(iWidth, iHeight));
-        ScalarField2 Blue;
-        Blue.init(makeVector2f(-fWidth, -fHeight), makeVector2f(fWidth, fHeight), makeVector2ui(iWidth, iHeight));
-
-        //Fill the scalar fields
-        for(size_t j=0; j<Red.dims()[1]; j++)
-        {
-            for(size_t i=0; i<Red.dims()[0]; i++)
-            {
-                Red.setNodeScalar(i, j, (float)(qRed(image.pixel(i, j))) / 255.0 );
-                Green.setNodeScalar(i, j, (float)(qGreen(image.pixel(i, j))) / 255.0 );
-                Blue.setNodeScalar(i, j, (float)(qBlue(image.pixel(i, j))) / 255.0 );
-            }
-        }
-
-        //Set the texture in the viewer
-        viewer->setTextureRGB(Red.getData(), Green.getData(), Blue.getData());
-    }
-    else
-    {
-        //Create one gray color channel represented as a scalar field
-        ScalarField2 Gray;
-        Gray.init(makeVector2f(-fWidth, -fHeight), makeVector2f(fWidth, fHeight), makeVector2ui(iWidth, iHeight));
-
-        //Set the values at the vertices
-        for(size_t j=0; j<Gray.dims()[1]; j++)
-        {
-            for(size_t i=0; i<Gray.dims()[0]; i++)
-            {
-                Gray.setNodeScalar(i, j, (float)(qGray(image.pixel(i, j))) / 255.0 );
-            }
-        }
-
-        //Set the texture in the viewer
-        viewer->setTextureGray(Gray.getData());
-    }
-
-    viewer->refresh();
 }

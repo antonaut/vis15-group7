@@ -27,7 +27,6 @@ public:
     void DrawMesh();
     void DrawScalarField();
     void DrawVectorField();
-    void DrawTexture();
     virtual QWidget* createViewer();
 
 //Attributes
