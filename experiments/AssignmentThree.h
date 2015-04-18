@@ -34,17 +34,14 @@ public:
     ///File name of the scalar field
     string ScalarfieldFilename;
 
+    ///The iso value for marching squares
+    float IsoValue;
+
     ///File name of the vector field
     string VectorfieldFilename;
 
     ///Length of the arrows
     float ArrowScale;
-
-    ///File name of the image for the texture
-    string ImageFilename;
-
-    ///Whether to draw the texture in RGB or grayscale
-    bool bColoredTexture;
 
 protected:
     GLGeometryViewer* viewer;

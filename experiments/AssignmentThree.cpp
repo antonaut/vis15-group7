@@ -21,6 +21,10 @@ IMPLEMENT_GEOX_CLASS( AssignmentThree, 0)
     ADD_STRING_PROP(ScalarfieldFilename, 0)
     ADD_NOARGS_METHOD(AssignmentThree::DrawScalarField)
 
+    ADD_SEPARATOR("Marching Squares")
+    ADD_FLOAT32_PROP(IsoValue, 0)
+    ADD_NOARGS_METHOD(AssignmentThree::DrawScalarField)
+
     ADD_SEPARATOR("Vectorfield")
     ADD_STRING_PROP(VectorfieldFilename, 0)
     ADD_FLOAT32_PROP(ArrowScale, 0)
@@ -37,10 +41,11 @@ AssignmentThree::AssignmentThree()
 {
     viewer = NULL;
     ScalarfieldFilename = "/home/simon/Dropbox/KTH/5an/visualization/ass3/SimpleGrid.am";
+    
+    IsoValue = 3;
+
     VectorfieldFilename = "";
     ArrowScale = 0.1;
-    ImageFilename = "";
-    bColoredTexture = true;
 }
 
 AssignmentThree::~AssignmentThree() {}
