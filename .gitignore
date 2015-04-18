@@ -12,3 +12,4 @@ GeoX_app
 Makefile
 qrc_geoX.cxx
 ui_*.h
+*.cxx_parameters
