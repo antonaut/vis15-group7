@@ -17,6 +17,11 @@ class AssignmentThree : public Experiment
 {
     GEOX_CLASS(AssignmentThree)
 
+private:
+    void AddContours(const Point2D&, float32, const Point2D&, float32, const Point2D&, float32, const Point2D&, float32);
+    void AddSingleContour(const Point2D&, float32, const Point2D&, float32, const Point2D&, float32, const Point2D&, float32);
+    float32 Interpolate(float32, float32, float32, float32);
+
 //Constructor / Destructor
 public:
     AssignmentThree();

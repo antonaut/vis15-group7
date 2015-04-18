@@ -111,9 +111,175 @@ void AssignmentThree::DrawMesh() {
     viewer->refresh();
 }
 
-void AssignmentThree::DrawMesh() {
+float32 AssignmentThree::Interpolate(float32 xy1, float32 v1, float32 xy2, float32 v2) {
+    float32 t = (IsoValue - v1) / (v2 - v1);
+
+    output << "(xy1, v1, xy2, v2) : " << "(" << xy1 << ", " << v1 << ", " << xy2 << ", " << v2 << ") : " << t << "\n"; 
+
+    return (1-t)*xy1 + t*xy2;;
+}
+
+void AssignmentThree::AddSingleContour(const Point2D &p1, float32 v1, const Point2D &p2, float32 v2, const Point2D &p3, float32 v3, const Point2D &p4, float32 v4) {
+    float32 x1 = p1.position[0];
+    float32 y1 = p1.position[1];
+    float32 x2 = p2.position[0];
+    float32 y2 = p2.position[1];
+    float32 x3 = p3.position[0];
+    float32 y3 = p3.position[1];
+    float32 x4 = p4.position[0];
+    float32 y4 = p4.position[1];
+
+    float32 line_x1 = Interpolate(x1, v1, x2, v2);
+    float32 line_y1 = Interpolate(y1, v1, y2, v2);
+    float32 line_x2 = Interpolate(x3, v3, x4, v4);
+    float32 line_y2 = Interpolate(y3, v3, y4, v4);
+
+    viewer->addLine(line_x1, line_y1, line_x2, line_y2);    
+}
+
+void AssignmentThree::AddContours(const Point2D &p1, float32 v1, const Point2D &p2, float32 v2, const Point2D &p3, float32 v3, const Point2D &p4, float32 v4) {
+    
+    /*
+     * No contours, return
+     */
+
+    if (v1 < IsoValue && v2 < IsoValue && v3 < IsoValue && v4 < IsoValue) {
+        return;
+    }
+
+    if (v1 >= IsoValue && v2 >= IsoValue && v3 >= IsoValue && v4 >= IsoValue) {
+        return;
+    }
+
+    /*
+     * Single bottom left contour
+     */
+
+    if (v1 < IsoValue && v2 >= IsoValue && v3 >= IsoValue && v4 >= IsoValue) {
+        AddSingleContour(p1, v1, p2, v2, p1, v1, p3, v3);
+    }
+
+    if (v1 > IsoValue && v2 < IsoValue && v3 < IsoValue && v4 < IsoValue) {
+        AddSingleContour(p1, v1, p2, v2, p1, v1, p3, v3);
+    }
+
+    /*
+     * Single bottom right contour
+     */
+
+    if (v2 < IsoValue && v1 >= IsoValue && v3 >= IsoValue && v4 >= IsoValue) {
+        AddSingleContour(p2, v2, p1, v1, p2, v2, p4, v4);
+    }
+
+    if (v2 >= IsoValue && v1 < IsoValue && v3 < IsoValue && v4 < IsoValue) {
+        AddSingleContour(p2, v2, p1, v1, p2, v2, p4, v4);
+    }
+
+    /*
+     * Single top left contour
+     */
+
+    if (v3 < IsoValue && v1 >= IsoValue && v2 >= IsoValue && v4 >= IsoValue) {
+        AddSingleContour(p3, v3, p1, v1, p3, v3, p4, v4);
+    }
+
+    if (v3 >= IsoValue && v1 < IsoValue && v2 < IsoValue && v4 < IsoValue) {
+        AddSingleContour(p3, v3, p1, v1, p3, v3, p4, v4);
+    }
+
+    /*
+     * Single top right contour
+     */
+
+    if (v4 < IsoValue && v1 >= IsoValue && v2 >= IsoValue && v3 >= IsoValue) {
+        AddSingleContour(p4, v4, p2, v2, p4, v4, p3, v3);
+    }
+
+    if (v4 >= IsoValue && v1 < IsoValue && v2 < IsoValue && v3 < IsoValue) {
+        AddSingleContour(p4, v4, p2, v2, p4, v4, p3, v3);
+    }
+
+    /*
+     * Single vertical contour
+     */
+
+    if (v1 < IsoValue && v3 < IsoValue && v2 >= IsoValue && v4 >= IsoValue) {
+        AddSingleContour(p1, v1, p2, v2, p3, v3, p4, v4);
+    }
+
+    if (v1 >= IsoValue && v3 >= IsoValue && v2 < IsoValue && v4 < IsoValue) {
+        AddSingleContour(p1, v1, p2, v2, p3, v3, p4, v4);
+    }
+
+    /*
+     * Single horizontal contour
+     */
+
+    if (v1 < IsoValue && v2 < IsoValue && v3 >= IsoValue && v4 >= IsoValue) {
+        AddSingleContour(p1, v1, p3, v3, p2, v2, p4, v4);
+    }
+
+    if (v1 >= IsoValue && v2 >= IsoValue && v3 < IsoValue && v4 < IsoValue) {
+        AddSingleContour(p1, v1, p3, v3, p2, v2, p4, v4);
+    }
+
+    /*
+     * Double contours
+     */
+
+    if (v1 < IsoValue && v4 < IsoValue && v2 >= IsoValue && v3 >= IsoValue) {
+        AddSingleContour(p1, v1, p2, v2, p1, v1, p3, v3);
+        AddSingleContour(p4, v4, p2, v2, p4, v4, p3, v3);
+    }
+
+    if (v1 >= IsoValue && v4 >= IsoValue && v2 < IsoValue && v3 < IsoValue) {
+        AddSingleContour(p1, v1, p2, v2, p1, v1, p3, v3);
+        AddSingleContour(p4, v4, p2, v2, p4, v4, p3, v3);
+    }
+}
+
+void AssignmentThree::MarchingSquares() {
     viewer->clear();
     DrawMesh();
+
+    //Load scalar field
+    ScalarField2 field;
+    if (!field.load(ScalarfieldFilename))
+    {
+        output << "Error loading field file " << ScalarfieldFilename << "\n";
+        return;
+    }
+
+    float32 min_v = std::numeric_limits<float32>::max();
+    float32 max_v = -std::numeric_limits<float32>::max();
+    for(size_t i = 0; i < field.dims()[0]; ++i) {
+        for(size_t j = 0; j < field.dims()[1]; ++j) {
+            float32 v = field.nodeScalar(i, j);
+
+            min_v = min(min_v, v);
+            max_v = max(max_v, v);
+        }
+    }
+
+    output << "Min v: " << min_v << "\n";
+    output << "Max v: " << max_v << "\n";
+
+    for(size_t i = 0; i < field.dims()[0] - 1; ++i) {
+        for(size_t j = 0; j < field.dims()[1] - 1; ++j) {
+            Point2D p1, p2, p3, p4;
+            p1.position = field.nodePosition(i, j);
+            p2.position = field.nodePosition(i+1, j);
+            p3.position = field.nodePosition(i, j+1);
+            p4.position = field.nodePosition(i+1, j+1);
+
+            float32 v1 = field.nodeScalar(i, j);
+            float32 v2 = field.nodeScalar(i+1, j);
+            float32 v3 = field.nodeScalar(i, j+1);
+            float32 v4 = field.nodeScalar(i+1, j+1);
+
+            AddContours(p1, v1, p2, v2, p3, v3, p4, v4);
+        }
+    }
     
     viewer->refresh();
 }
@@ -130,26 +296,13 @@ void AssignmentThree::DrawScalarField()
         return;
     }
 
-    //Get the minimum/maximum value in that field
-    float32 min = std::numeric_limits<float32>::max();
-    float32 max = -std::numeric_limits<float32>::max();
-    for(size_t j=0; j<field.dims()[1]; j++)
-    {
-        for(size_t i=0; i< field.dims()[0]; i++)
-        {
-            const float32 val = field.nodeScalar(i,j);
-            min = val < min ? val : min;
-            max = val > max ? val : max;
-        }
-    }
-
     //Draw a point for each grid vertex.
     for(size_t j=0; j<field.dims()[1]; j++)
     {
         for(size_t i=0; i<field.dims()[0]; i++)
         {
             const float32 val = field.nodeScalar(i, j);
-            const float32 c = (val - min) / (max - min);
+            const float32 c = val < IsoValue ? 0 : 1;
 
             Point2D p;
             p.position  = field.nodePosition(i, j);
