@@ -6,26 +6,30 @@
 #include "Properties.h"
 #include "GLGeometryViewer.h"
 #include "GeoXOutput.h"
-
 //---------------------------------------------------------------------------
+
+#include <limits>
+#include "Field2.hpp"
 
 IMPLEMENT_GEOX_CLASS( AssignmentThree, 0)
 {
     BEGIN_CLASS_INIT( AssignmentThree );
-    ADD_NOARGS_METHOD(AssignmentThree::CreateData_Random);
-    ADD_NOARGS_METHOD(AssignmentThree::DrawScatterPlot);
-    ADD_NOARGS_METHOD(AssignmentThree::DrawLine);
 
+    ADD_NOARGS_METHOD(AssignmentThree::DrawMesh);
 
-    ADD_SEPARATOR("Circle");
-    ADD_FLOAT32_PROP(Radius, 0);
-    ADD_VECTOR2F_PROP(Center, 0);
-    ADD_INT32_PROP(NumSamples, 0);
-    ADD_NOARGS_METHOD(AssignmentThree::DrawCircle);
+    ADD_SEPARATOR("Scalarfield")
+    ADD_STRING_PROP(ScalarfieldFilename, 0)
+    ADD_NOARGS_METHOD(AssignmentThree::DrawScalarField)
 
-    ADD_SEPARATOR("BOUNCY BALL");
-    ADD_VECTOR2F_PROP(Velocity, 0);
-    ADD_NOARGS_METHOD(AssignmentThree::BouncingBall);
+    ADD_SEPARATOR("Vectorfield")
+    ADD_STRING_PROP(VectorfieldFilename, 0)
+    ADD_FLOAT32_PROP(ArrowScale, 0)
+    ADD_NOARGS_METHOD(AssignmentThree::DrawVectorField)
+
+    ADD_SEPARATOR("Texture")
+    ADD_STRING_PROP(ImageFilename, 0)
+    ADD_BOOLEAN_PROP(bColoredTexture, 0)
+    ADD_NOARGS_METHOD(AssignmentThree::DrawTexture)
 }
 
 QWidget* AssignmentThree::createViewer()
@@ -37,106 +41,229 @@ QWidget* AssignmentThree::createViewer()
 AssignmentThree::AssignmentThree()
 {
     viewer = NULL;
-    Radius = 1.0f;
-    Center = makeVector2f(0, 0);
-    NumSamples = 100;
+    ScalarfieldFilename = "/home/simon/Dropbox/KTH/5an/visualization/ass3/SimpleGrid.am";
+    VectorfieldFilename = "";
+    ArrowScale = 0.1;
+    ImageFilename = "";
+    bColoredTexture = true;
 }
 
 AssignmentThree::~AssignmentThree() {}
 
+void AssignmentThree::DrawMesh() {
+    viewer->clear();
 
-void AssignmentThree::CreateData_Random()
-{
-    Data.clear();
-    Data.resize(1000);
-    for(int i=0;i<(int)Data.size();i++)
+    //Load scalar field
+    ScalarField2 field;
+    if (!field.load(ScalarfieldFilename))
     {
-        Data[i][0] = (float)rand() / RAND_MAX;
-        Data[i][1] = (float)rand() / RAND_MAX;
-    }
-}
-
-
-void AssignmentThree::DrawScatterPlot()
-{
-    for(int i=0;i<(int)Data.size();i++)
-    {
-        Point2D NewPoint(Data[i][0], Data[i][1]);
-        NewPoint.color = makeVector4f(Data[i][0], Data[i][1], 0.5, 1);
-        viewer->addPoint(NewPoint);
+        output << "Error loading field file " << ScalarfieldFilename << "\n";
+        return;
     }
 
-    //Axes
-    Point2D Origin(0, 0);
-    Origin.color = makeVector4f(1,1,1,1);
-    Origin.size = 10;
-    const int idOrigin = viewer->addPoint(Origin);
+    for(size_t i = 0; i < field.dims()[0] - 1; ++i) {
+        for(size_t j = 0; j < field.dims()[1] - 1; ++j) {
+            Point2D p1, p2, p3;
+            p1.position = field.nodePosition(i, j);
+            p2.position = field.nodePosition(i+1, j);
+            p3.position = field.nodePosition(i, j+1);
 
-    Point2D XOff(1.1, 0);
-    XOff.color = makeVector4f(1,0,0,1);
-    XOff.size = 10;
-    const int idXOff = viewer->addPoint(XOff);
+            float32 x1 = p1.position[0];
+            float32 y1 = p1.position[1];
+            float32 x2 = p2.position[0];
+            float32 y2 = p2.position[1];
+            float32 x3 = p3.position[0];
+            float32 y3 = p3.position[1];
 
-    Point2D YOff(0, 1.1);
-    YOff.color = makeVector4f(0,1,0,1);
-    YOff.size = 10;
-    const int idYOff = viewer->addPoint(YOff);
+            viewer->addLine(x1, y1, x2, y2);
+            viewer->addLine(x1, y1, x3, y3);
+        }
+    }
 
-    //X-Axis
-    Line Axis;
-    Axis.vertices[0] = idOrigin;
-    Axis.vertices[1] = idXOff;
-    Axis.color = makeVector4f(1,1,1,1);
-    Axis.thickness = 3;
-    viewer->addLine(Axis);
+    for(size_t i = 0, j = field.dims()[1] - 1; i < field.dims()[0] - 1; ++i) {
+        Point2D p1, p2;
+        p1.position = field.nodePosition(i, j);
+        p2.position = field.nodePosition(i+1, j);
+    
 
-    //Y-Axis
-    Axis.vertices[1] = idYOff;
-    viewer->addLine(Axis);
-
-    // display changes
-    viewer->refresh();
-}
-
-void AssignmentThree::DrawLine()
-{
-    viewer->addLine(0, 0, 10, 10);
-
-    viewer->refresh();
-}
-
-
-void AssignmentThree::DrawCircle()
-{
-    for(int i=1; i <= NumSamples; ++i) {
-        const float PI = 3.14159265359;
-        const float x1 = Center[0] +
-            Radius * cos(2 * PI * float(i)/float(NumSamples));
-        const float y1 = Center[1] +
-            Radius * sin(2 * PI * float(i)/float(NumSamples));
-        const float x2 = Center[0] +
-            Radius * cos(2 * PI * float(i+1)/float(NumSamples));
-        const float y2 = Center[1] +
-            Radius * sin(2 * PI * float(i+1)/float(NumSamples));
-
+        float32 x1 = p1.position[0];
+        float32 y1 = p1.position[1];
+        float32 x2 = p2.position[0];
+        float32 y2 = p2.position[1];
+     
         viewer->addLine(x1, y1, x2, y2);
     }
+
+    for(size_t j = 0, i = field.dims()[0] - 1; j < field.dims()[1] - 1; ++j) {
+        Point2D p1, p2;
+        p1.position = field.nodePosition(i, j);
+        p2.position = field.nodePosition(i, j+1);
+    
+
+        float32 x1 = p1.position[0];
+        float32 y1 = p1.position[1];
+        float32 x2 = p2.position[0];
+        float32 y2 = p2.position[1];
+     
+        viewer->addLine(x1, y1, x2, y2);
+    }
+    
     viewer->refresh();
 }
 
-void AssignmentThree::BouncingBall()
+void AssignmentThree::DrawScalarField()
 {
-    for (int i=0; i<100; ++i)
+    viewer->clear();
+
+    //Load scalar field
+    ScalarField2 field;
+    if (!field.load(ScalarfieldFilename))
     {
-        MoveBall();
-        DrawCircle();
+        output << "Error loading field file " << ScalarfieldFilename << "\n";
+        return;
+    }
+
+    //Get the minimum/maximum value in that field
+    float32 min = std::numeric_limits<float32>::max();
+    float32 max = -std::numeric_limits<float32>::max();
+    for(size_t j=0; j<field.dims()[1]; j++)
+    {
+        for(size_t i=0; i< field.dims()[0]; i++)
+        {
+            const float32 val = field.nodeScalar(i,j);
+            min = val < min ? val : min;
+            max = val > max ? val : max;
+        }
+    }
+
+    //Draw a point for each grid vertex.
+    for(size_t j=0; j<field.dims()[1]; j++)
+    {
+        for(size_t i=0; i<field.dims()[0]; i++)
+        {
+            const float32 val = field.nodeScalar(i, j);
+            const float32 c = (val - min) / (max - min);
+
+            Point2D p;
+            p.position  = field.nodePosition(i, j);
+            p.size = 5;
+            //Use a grayscale depending on the actual value
+            p.color[0] = c; p.color[1] = c; p.color[2] = c;
+            viewer->addPoint(p);
+        }
+    }
+
+    viewer->refresh();
+}
+
+void AssignmentThree::DrawVectorField()
+{
+    viewer->clear();
+
+    //Load the vector field
+    VectorField2 field;
+    if (!field.load(VectorfieldFilename))
+    {
+        output << "Error loading field file " << VectorfieldFilename << "\n";
+        return;
+    }
+
+    //Draw vector directions (constant length)
+    for(float32 x=field.boundMin()[0]; x<=field.boundMax()[0]; x+=0.2)
+    {
+        for(float32 y=field.boundMin()[1]; y<=field.boundMax()[1]; y+=0.2)
+        {
+            Vector2f vec = field.sample(x,y);
+            vec.normalize();
+
+            viewer->addLine(x, y, x + ArrowScale*vec[0], y + ArrowScale*vec[1]);
+        }
+    }
+
+    viewer->refresh();
+}
+
+
+namespace
+{
+    ///Returns the next power-of-two
+    int32 NextPOT(int32 n)
+    {
+        n--;
+        n |= n >> 1;   // Divide by 2^k for consecutive doublings of k up to 32,
+        n |= n >> 2;   // and then or the results.
+        n |= n >> 4;
+        n |= n >> 8;
+        n |= n >> 16;
+        n++;           // The result is a number of 1 bits equal to the number
+                       // of bits in the original number, plus 1. That's the
+                       // next highest power of 2.
+        return n;
     }
 }
 
-void AssignmentThree::MoveBall()
+
+void AssignmentThree::DrawTexture()
 {
-    Center += Velocity;
-    if (Center.getSqrNorm() > 8.0) {
-        Velocity = -Velocity;
+    viewer->clear();
+
+    //Load the texture using Qt
+    QImage image(ImageFilename.c_str());
+
+    //Get its (original) dimensions. Used as bounds later.
+    const float fWidth = (float)image.width();
+    const float fHeight = (float)image.height();
+
+    //Resize to power-of-two and mirror.
+    image = image.mirrored().scaled(NextPOT(image.width()), NextPOT(image.height()));
+
+    //Get its new integer dimensions.
+    const int iWidth = image.width();
+    const int iHeight = image.height();
+
+    if (bColoredTexture)
+    {
+        //Create three color channels for the texture
+        //Each of them is represented using a scalar field
+        ScalarField2 Red;
+        Red.init(makeVector2f(-fWidth, -fHeight), makeVector2f(fWidth, fHeight), makeVector2ui(iWidth, iHeight));
+        ScalarField2 Green;
+        Green.init(makeVector2f(-fWidth, -fHeight), makeVector2f(fWidth, fHeight), makeVector2ui(iWidth, iHeight));
+        ScalarField2 Blue;
+        Blue.init(makeVector2f(-fWidth, -fHeight), makeVector2f(fWidth, fHeight), makeVector2ui(iWidth, iHeight));
+
+        //Fill the scalar fields
+        for(size_t j=0; j<Red.dims()[1]; j++)
+        {
+            for(size_t i=0; i<Red.dims()[0]; i++)
+            {
+                Red.setNodeScalar(i, j, (float)(qRed(image.pixel(i, j))) / 255.0 );
+                Green.setNodeScalar(i, j, (float)(qGreen(image.pixel(i, j))) / 255.0 );
+                Blue.setNodeScalar(i, j, (float)(qBlue(image.pixel(i, j))) / 255.0 );
+            }
+        }
+
+        //Set the texture in the viewer
+        viewer->setTextureRGB(Red.getData(), Green.getData(), Blue.getData());
     }
+    else
+    {
+        //Create one gray color channel represented as a scalar field
+        ScalarField2 Gray;
+        Gray.init(makeVector2f(-fWidth, -fHeight), makeVector2f(fWidth, fHeight), makeVector2ui(iWidth, iHeight));
+
+        //Set the values at the vertices
+        for(size_t j=0; j<Gray.dims()[1]; j++)
+        {
+            for(size_t i=0; i<Gray.dims()[0]; i++)
+            {
+                Gray.setNodeScalar(i, j, (float)(qGray(image.pixel(i, j))) / 255.0 );
+            }
+        }
+
+        //Set the texture in the viewer
+        viewer->setTextureGray(Gray.getData());
+    }
+
+    viewer->refresh();
 }

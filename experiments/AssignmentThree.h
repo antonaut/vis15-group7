@@ -24,27 +24,28 @@ public:
 
 //Methods
 public:
-    void CreateData_Random();
-    void DrawScatterPlot();
-    void DrawLine();
-    void DrawCircle();
-    void BouncingBall();
+    void DrawMesh();
+    void DrawScalarField();
+    void DrawVectorField();
+    void DrawTexture();
     virtual QWidget* createViewer();
-
-private:
-    void MoveBall();
 
 //Attributes
 public:
-    vector< Vector2f > Data;
+    ///File name of the scalar field
+    string ScalarfieldFilename;
 
-    // Used for the circle
-    float Radius;
-    Vector2f Center;
-    int NumSamples;
+    ///File name of the vector field
+    string VectorfieldFilename;
 
-    //Parameters for Bouncy Ball
-    Vector2f Velocity;
+    ///Length of the arrows
+    float ArrowScale;
+
+    ///File name of the image for the texture
+    string ImageFilename;
+
+    ///Whether to draw the texture in RGB or grayscale
+    bool bColoredTexture;
 
 protected:
     GLGeometryViewer* viewer;
