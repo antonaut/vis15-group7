@@ -1,0 +1,11 @@
+-I/usr/include
+-I/usr/include/QtOpenGL
+-I/usr/include/QtGui
+-I/usr/include/QtCore
+-D$<$<NOT:$<CONFIG:Debug>>:QT_NO_DEBUG>
+-DQT_OPENGL_LIB
+-DQT_GUI_LIB
+-DQT_CORE_LIB
+-o
+/home/aerholt/vis15/vis15-group7/system/gui/moc_VerticalScrollView.cxx
+/home/aerholt/vis15/vis15-group7/system/gui/VerticalScrollView.h

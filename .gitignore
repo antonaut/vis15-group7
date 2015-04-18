@@ -1,0 +1,14 @@
+# Temp files
+*~
+
+# CMake files
+build/
+CMakeCache.txt
+cmake_install.cmake
+CMakeFiles
+
+# Make generated + build
+GeoX_app
+Makefile
+qrc_geoX.cxx
+ui_*.h
