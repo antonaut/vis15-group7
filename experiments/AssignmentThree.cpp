@@ -23,7 +23,7 @@ IMPLEMENT_GEOX_CLASS( AssignmentThree, 0)
 
     ADD_SEPARATOR("Marching Squares")
     ADD_FLOAT32_PROP(IsoValue, 0)
-    ADD_NOARGS_METHOD(AssignmentThree::DrawScalarField)
+    ADD_NOARGS_METHOD(AssignmentThree::MarchingSquares)
 
     ADD_SEPARATOR("Vectorfield")
     ADD_STRING_PROP(VectorfieldFilename, 0)
@@ -107,6 +107,13 @@ void AssignmentThree::DrawMesh() {
      
         viewer->addLine(x1, y1, x2, y2);
     }
+    
+    viewer->refresh();
+}
+
+void AssignmentThree::DrawMesh() {
+    viewer->clear();
+    DrawMesh();
     
     viewer->refresh();
 }

@@ -25,6 +25,7 @@ public:
 //Methods
 public:
     void DrawMesh();
+    void MarchingSquares();
     void DrawScalarField();
     void DrawVectorField();
     virtual QWidget* createViewer();
