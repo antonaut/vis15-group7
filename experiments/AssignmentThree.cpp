@@ -4,12 +4,10 @@
 #include "AssignmentThree.h"
 //---------------------------------------------------------------------------
 #include "Properties.h"
-#include "GLGeometryViewer.h"
 #include "GeoXOutput.h"
 //---------------------------------------------------------------------------
 
 #include <limits>
-#include "Field2.hpp"
 #include <vector>
 
 
@@ -26,9 +24,15 @@ IMPLEMENT_GEOX_CLASS( AssignmentThree, 0)
     ADD_SEPARATOR("Marching Squares")
     ADD_FLOAT32_PROP(IsoValue, 0)
     ADD_BOOLEAN_PROP(UseMidPointDecider, false)
+    ADD_NOARGS_METHOD(AssignmentThree::MarchingSquares)
+
+    ADD_SEPARATOR("IsoContours")
+    ADD_INT32_PROP(NumberOfIsoContours, 0)
+    ADD_NOARGS_METHOD(AssignmentThree::IsoContours)
+
+    ADD_SEPARATOR("Drawing options")
     ADD_BOOLEAN_PROP(ShowScalarPoints, false)
     ADD_BOOLEAN_PROP(ShowMesh, false)
-    ADD_NOARGS_METHOD(AssignmentThree::MarchingSquares)
 
     ADD_SEPARATOR("Vectorfield")
     ADD_STRING_PROP(VectorfieldFilename, 0)
@@ -52,6 +56,9 @@ AssignmentThree::AssignmentThree()
     ShowScalarPoints = true;
     ShowMesh = true;
 
+    NumberOfIsoContours = 5;
+    isocolor = makeVector4f(1.0, 0.0, 0.0, 1); // Red
+
     VectorfieldFilename = "";
     ArrowScale = 0.1;
     square_count = 0;
@@ -59,23 +66,29 @@ AssignmentThree::AssignmentThree()
 
 AssignmentThree::~AssignmentThree() {}
 
+void AssignmentThree::LoadScalarField() {
+        //Load scalar field
+    if (!Field.load(ScalarfieldFilename))
+    {
+        error("Error loading field file " + ScalarfieldFilename + "\n");
+    }
+}
+
 void AssignmentThree::DrawMesh() {
     viewer->clear();
 
-    //Load scalar field
-    ScalarField2 field;
-    if (!field.load(ScalarfieldFilename))
-    {
-        output << "Error loading field file " << ScalarfieldFilename << "\n";
-        return;
-    }
+    LoadScalarField();
 
-    for(size_t i = 0; i < field.dims()[0] - 1; ++i) {
-        for(size_t j = 0; j < field.dims()[1] - 1; ++j) {
+    viewer->refresh();
+}
+
+void AssignmentThree::DrawMeshHelper() {
+    for(size_t i = 0; i < Field.dims()[0] - 1; ++i) {
+        for(size_t j = 0; j < Field.dims()[1] - 1; ++j) {
             Point2D p1, p2, p3;
-            p1.position = field.nodePosition(i, j);
-            p2.position = field.nodePosition(i+1, j);
-            p3.position = field.nodePosition(i, j+1);
+            p1.position = Field.nodePosition(i, j);
+            p2.position = Field.nodePosition(i+1, j);
+            p3.position = Field.nodePosition(i, j+1);
 
             float32 x1 = p1.position[0];
             float32 y1 = p1.position[1];
@@ -89,10 +102,10 @@ void AssignmentThree::DrawMesh() {
         }
     }
 
-    for(size_t i = 0, j = field.dims()[1] - 1; i < field.dims()[0] - 1; ++i) {
+    for(size_t i = 0, j = Field.dims()[1] - 1; i < Field.dims()[0] - 1; ++i) {
         Point2D p1, p2;
-        p1.position = field.nodePosition(i, j);
-        p2.position = field.nodePosition(i+1, j);
+        p1.position = Field.nodePosition(i, j);
+        p2.position = Field.nodePosition(i+1, j);
 
 
         float32 x1 = p1.position[0];
@@ -103,10 +116,10 @@ void AssignmentThree::DrawMesh() {
         viewer->addLine(x1, y1, x2, y2);
     }
 
-    for(size_t j = 0, i = field.dims()[0] - 1; j < field.dims()[1] - 1; ++j) {
+    for(size_t j = 0, i = Field.dims()[0] - 1; j < Field.dims()[1] - 1; ++j) {
         Point2D p1, p2;
-        p1.position = field.nodePosition(i, j);
-        p2.position = field.nodePosition(i, j+1);
+        p1.position = Field.nodePosition(i, j);
+        p2.position = Field.nodePosition(i, j+1);
 
 
         float32 x1 = p1.position[0];
@@ -116,15 +129,15 @@ void AssignmentThree::DrawMesh() {
 
         viewer->addLine(x1, y1, x2, y2);
     }
-
-    viewer->refresh();
 }
 
 float32 AssignmentThree::Interpolate(float32 xy1, float32 v1, float32 xy2, float32 v2) {
     float32 t = (IsoValue - v1) / (v2 - v1);
     float32 res = (1-t)*xy1 + t*xy2;
+    /*
     output << "Interpolation: (xy1, v1, xy2, v2) : " << "(" << xy1 << ", " << v1 << ", " << xy2 << ", " << v2 << ") : " << t << "\n";
     output << "Yields: " << res << "\n";
+    */
     return res;
 }
 
@@ -144,11 +157,14 @@ void AssignmentThree::AddSingleContour(const Point2D &p1, float32 v1, const Poin
     float32 line_x2 = Interpolate(x3, v3, x4, v4);
     float32 line_y2 = Interpolate(y3, v3, y4, v4);
 
-    viewer->addLine(line_x1, line_y1, line_x2, line_y2);
+    viewer->addLine(line_x1, line_y1, line_x2, line_y2, isocolor);
 }
 
 void AssignmentThree::AddContours(Point2D &p1, float32 v1, Point2D &p2, float32 v2, Point2D &p3, float32 v3, Point2D &p4, float32 v4) {
+    /*
     output << "\n\nAdding contours (" << square_count << ") for " << p1 << " v:" << v1 << ", " << p2 << " v:" << v2 << ", " << p3 << " v:" << v3 << ", " << p4 << " v:" << v4 << "\n";
+
+    */
     /*
      * No contours, return
      */
@@ -249,21 +265,6 @@ void AssignmentThree::AddContours(Point2D &p1, float32 v1, Point2D &p2, float32 
      * Double contours
      */
 
-
-    bool reflect = v1 < IsoValue && v4 < IsoValue && v2 >= IsoValue && v3 >= IsoValue;
-    
-/*
-    if (v1 < IsoValue && v4 < IsoValue && v2 >= IsoValue && v3 >= IsoValue) {
-        AddSingleContour(p1, v1, p2, v2, p1, v1, p3, v3);
-        AddSingleContour(p4, v4, p2, v2, p4, v4, p3, v3);
-    }
-
-    if (v1 >= IsoValue && v4 >= IsoValue && v2 < IsoValue && v3 < IsoValue) {
-        AddSingleContour(p1, v1, p2, v2, p1, v1, p3, v3);
-        AddSingleContour(p4, v4, p2, v2, p4, v4, p3, v3);
-    }
-*/
-
     float32 x1 = p1.position[0];
     float32 y1 = p1.position[1];
 
@@ -294,12 +295,13 @@ void AssignmentThree::AddContours(Point2D &p1, float32 v1, Point2D &p2, float32 
     Point2D pi34;
     pi34.position[0] = ip34;
     pi34.position[1] = y3;
-
+    /*
     output << "pi12: " << pi12 << " between " << p1 << " and " << p2 << ".\n";
     output << "pi24: " << pi24 << " between " << p2 << " and " << p4 << ".\n";
     output << "pi13: " << pi13 << " between " << p1 << " and " << p3 << ".\n";
     output << "pi34: " << pi34 << " between " << p3 << " and " << p4 << ".\n";
-
+    */
+   
     /*
      * Mid point decider.
      */
@@ -343,28 +345,24 @@ void AssignmentThree::AddContours(Point2D &p1, float32 v1, Point2D &p2, float32 
 
 void AssignmentThree::DrawLineFromPoints(const Point2D& p1, const Point2D& p2) {
     output << "Drawing a line between " << p1 << " and " << p2 << ".\n";
-    viewer->addLine(p1.position[0], p1.position[1], p2.position[0], p2.position[1]);
+    viewer->addLine(p1.position[0], p1.position[1], p2.position[0], p2.position[1], isocolor);
 }
 
-void AssignmentThree::MarchingSquares() {
+void AssignmentThree::IsoContours() {
     viewer->clear();
-    if (ShowMesh) {
-        DrawMesh();
-    }
-
-    //Load scalar field
-    ScalarField2 field;
-    if (!field.load(ScalarfieldFilename))
-    {
-        output << "Error loading field file " << ScalarfieldFilename << "\n";
+    
+    if (NumberOfIsoContours < 1) {
+        error("Invalid number of IsoContours.");
         return;
     }
 
+    LoadScalarField();
+
     float32 min_v = std::numeric_limits<float32>::max();
     float32 max_v = -std::numeric_limits<float32>::max();
-    for(size_t i = 0; i < field.dims()[0]; ++i) {
-        for(size_t j = 0; j < field.dims()[1]; ++j) {
-            float32 v = field.nodeScalar(i, j);
+    for(size_t i = 0; i < Field.dims()[0]; ++i) {
+        for(size_t j = 0; j < Field.dims()[1]; ++j) {
+            float32 v = Field.nodeScalar(i, j);
 
             min_v = min(min_v, v);
             max_v = max(max_v, v);
@@ -373,79 +371,84 @@ void AssignmentThree::MarchingSquares() {
 
     output << "Min v: " << min_v << "\n";
     output << "Max v: " << max_v << "\n";
+    
+
+    isocolor = makeVector4f(1.0, 0.0, 0.0, 1);
+
+    float32 deltaColor = 1/((float32)(NumberOfIsoContours));
+    float32 deltaIso = (max_v - min_v)*deltaColor;
+    IsoValue = min_v;
+
+    for (int i=NumberOfIsoContours; i>0;i--) {
+        MarchingSquaresHelper();
+        isocolor = makeVector4f(isocolor[0]-deltaColor, 0.0, isocolor[2]+deltaColor, 1.0);
+        IsoValue += deltaIso;
+    }
+    viewer->refresh();
+}
+
+void AssignmentThree::MarchingSquares() {
+    viewer->clear();
+    LoadScalarField();
+    MarchingSquaresHelper();
+    viewer->refresh();
+}
+
+void AssignmentThree::MarchingSquaresHelper() {
+    if (ShowMesh) {
+        DrawMeshHelper();
+    }
+
     square_count = 0;
 
-    for(size_t i = 0; i < field.dims()[0] - 1; ++i) {
-        for(size_t j = 0; j < field.dims()[1] - 1; ++j) {
+    for(size_t i = 0; i < Field.dims()[0] - 1; ++i) {
+        for(size_t j = 0; j < Field.dims()[1] - 1; ++j) {
             Point2D p1, p2, p3, p4;
-            p1.position = field.nodePosition(i, j);
-            p2.position = field.nodePosition(i+1, j);
-            p3.position = field.nodePosition(i, j+1);
-            p4.position = field.nodePosition(i+1, j+1);
+            p1.position = Field.nodePosition(i, j);
+            p2.position = Field.nodePosition(i+1, j);
+            p3.position = Field.nodePosition(i, j+1);
+            p4.position = Field.nodePosition(i+1, j+1);
 
-            float32 v1 = field.nodeScalar(i, j);
-            float32 v2 = field.nodeScalar(i+1, j);
-            float32 v3 = field.nodeScalar(i, j+1);
-            float32 v4 = field.nodeScalar(i+1, j+1);
+            float32 v1 = Field.nodeScalar(i, j);
+            float32 v2 = Field.nodeScalar(i+1, j);
+            float32 v3 = Field.nodeScalar(i, j+1);
+            float32 v4 = Field.nodeScalar(i+1, j+1);
 
             ++square_count;
             AddContours(p1, v1, p2, v2, p3, v3, p4, v4);
         }
     }
 
-    /* For debugging... */
     if (ShowScalarPoints) {
-        //Draw a point for each grid vertex.
-        for(size_t j=0; j<field.dims()[1]; j++)
-        {
-            for(size_t i=0; i<field.dims()[0]; i++)
-            {
-                const float32 val = field.nodeScalar(i, j);
-                const float32 c = val < IsoValue ? 0 : 1;
-
-                Point2D p;
-                p.position  = field.nodePosition(i, j);
-                p.size = 5;
-                //Use a grayscale depending on the actual value
-                p.color[0] = c; p.color[1] = c; p.color[2] = c;
-                viewer->addPoint(p);
-            }
-        }
+        DrawScalarFieldHelper();
     }
-
-    viewer->refresh();
 }
 
 void AssignmentThree::DrawScalarField()
 {
     viewer->clear();
+    DrawScalarFieldHelper();
+    viewer->refresh();
+}
 
-    //Load scalar field
-    ScalarField2 field;
-    if (!field.load(ScalarfieldFilename))
-    {
-        output << "Error loading field file " << ScalarfieldFilename << "\n";
-        return;
-    }
-
+void AssignmentThree::DrawScalarFieldHelper() {
+    
     //Draw a point for each grid vertex.
-    for(size_t j=0; j<field.dims()[1]; j++)
+    for(size_t j=0; j<Field.dims()[1]; j++)
     {
-        for(size_t i=0; i<field.dims()[0]; i++)
+        for(size_t i=0; i<Field.dims()[0]; i++)
         {
-            const float32 val = field.nodeScalar(i, j);
+            const float32 val = Field.nodeScalar(i, j);
             const float32 c = val < IsoValue ? 0 : 1;
 
             Point2D p;
-            p.position  = field.nodePosition(i, j);
+            p.position  = Field.nodePosition(i, j);
             p.size = 5;
             //Use a grayscale depending on the actual value
             p.color[0] = c; p.color[1] = c; p.color[2] = c;
             viewer->addPoint(p);
         }
     }
-
-    viewer->refresh();
 }
 
 void AssignmentThree::DrawVectorField()
