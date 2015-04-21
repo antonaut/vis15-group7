@@ -26,6 +26,8 @@ IMPLEMENT_GEOX_CLASS( AssignmentThree, 0)
     ADD_SEPARATOR("Marching Squares")
     ADD_FLOAT32_PROP(IsoValue, 0)
     ADD_BOOLEAN_PROP(UseMidPointDecider, false)
+    ADD_BOOLEAN_PROP(ShowScalarPoints, false)
+    ADD_BOOLEAN_PROP(ShowMesh, false)
     ADD_NOARGS_METHOD(AssignmentThree::MarchingSquares)
 
     ADD_SEPARATOR("Vectorfield")
@@ -47,6 +49,9 @@ AssignmentThree::AssignmentThree()
 
     IsoValue = 3.5;
     UseMidPointDecider = true;
+    ShowScalarPoints = true;
+    ShowMesh = true;
+
     VectorfieldFilename = "";
     ArrowScale = 0.1;
     square_count = 0;
@@ -343,7 +348,9 @@ void AssignmentThree::DrawLineFromPoints(const Point2D& p1, const Point2D& p2) {
 
 void AssignmentThree::MarchingSquares() {
     viewer->clear();
-    DrawMesh();
+    if (ShowMesh) {
+        DrawMesh();
+    }
 
     //Load scalar field
     ScalarField2 field;
@@ -387,20 +394,22 @@ void AssignmentThree::MarchingSquares() {
     }
 
     /* For debugging... */
-    //Draw a point for each grid vertex.
-    for(size_t j=0; j<field.dims()[1]; j++)
-    {
-        for(size_t i=0; i<field.dims()[0]; i++)
+    if (ShowScalarPoints) {
+        //Draw a point for each grid vertex.
+        for(size_t j=0; j<field.dims()[1]; j++)
         {
-            const float32 val = field.nodeScalar(i, j);
-            const float32 c = val < IsoValue ? 0 : 1;
+            for(size_t i=0; i<field.dims()[0]; i++)
+            {
+                const float32 val = field.nodeScalar(i, j);
+                const float32 c = val < IsoValue ? 0 : 1;
 
-            Point2D p;
-            p.position  = field.nodePosition(i, j);
-            p.size = 5;
-            //Use a grayscale depending on the actual value
-            p.color[0] = c; p.color[1] = c; p.color[2] = c;
-            viewer->addPoint(p);
+                Point2D p;
+                p.position  = field.nodePosition(i, j);
+                p.size = 5;
+                //Use a grayscale depending on the actual value
+                p.color[0] = c; p.color[1] = c; p.color[2] = c;
+                viewer->addPoint(p);
+            }
         }
     }
 

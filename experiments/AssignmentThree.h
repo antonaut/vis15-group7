@@ -52,6 +52,8 @@ public:
     float ArrowScale;
 
     bool UseMidPointDecider;
+    bool ShowScalarPoints;
+    bool ShowMesh;
 
 protected:
     GLGeometryViewer* viewer;
