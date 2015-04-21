@@ -374,17 +374,17 @@ void AssignmentThree::IsoContours() {
     output << "Min v: " << min_v << "\n";
     output << "Max v: " << max_v << "\n";
     
-
+    // Red is highest iso value
     isocolor = makeVector4f(1.0, 0.0, 0.0, 1);
 
     float32 deltaColor = 1/((float32)(NumberOfIsoContours));
     float32 deltaIso = (max_v - min_v)*deltaColor;
-    IsoValue = min_v;
+    IsoValue = max_v;
 
     for (int i=NumberOfIsoContours; i>0;i--) {
         MarchingSquaresHelper();
         isocolor = makeVector4f(isocolor[0]-deltaColor, 0.0, isocolor[2]+deltaColor, 1.0);
-        IsoValue += deltaIso;
+        IsoValue -= deltaIso;
     }
     viewer->refresh();
 }
