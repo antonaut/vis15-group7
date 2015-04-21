@@ -344,7 +344,9 @@ void AssignmentThree::AddContours(Point2D &p1, float32 v1, Point2D &p2, float32 
 }
 
 void AssignmentThree::DrawLineFromPoints(const Point2D& p1, const Point2D& p2) {
+    /*
     output << "Drawing a line between " << p1 << " and " << p2 << ".\n";
+    */
     viewer->addLine(p1.position[0], p1.position[1], p2.position[0], p2.position[1], isocolor);
 }
 
