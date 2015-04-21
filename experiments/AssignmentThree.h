@@ -18,9 +18,11 @@ class AssignmentThree : public Experiment
     GEOX_CLASS(AssignmentThree)
 
 private:
-    void AddContours(const Point2D&, float32, const Point2D&, float32, const Point2D&, float32, const Point2D&, float32);
+    void AddContours(Point2D&, float32, Point2D&, float32, Point2D&, float32, Point2D&, float32);
     void AddSingleContour(const Point2D&, float32, const Point2D&, float32, const Point2D&, float32, const Point2D&, float32);
     float32 Interpolate(float32, float32, float32, float32);
+    void DrawLineFromPoints(const Point2D&, const Point2D&);
+    int square_count;
 
 //Constructor / Destructor
 public:
@@ -49,9 +51,11 @@ public:
     ///Length of the arrows
     float ArrowScale;
 
+    bool UseMidPointDecider;
+
 protected:
     GLGeometryViewer* viewer;
 };
 
-
+bool xcomp(Point2D p1, Point2D p2);
 #endif

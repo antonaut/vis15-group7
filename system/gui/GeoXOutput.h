@@ -7,6 +7,7 @@
 #include "DynamicLinearAlgebra.h"
 #include "BoundingBox.h"
 #include "SparseLinearAlgebra.h"
+#include "VisTypes.h"
 //---------------------------------------------------------------------------
 
 using namespace std;
@@ -40,6 +41,7 @@ class GeoXOutput {
    GeoXOutput& operator<<(const DynamicVector<float> &m);
    GeoXOutput& operator<<(const DynamicMatrix<float> &m);
    GeoXOutput& operator<<(SparseMatrixF &A);
+   GeoXOutput& operator<<(const Point2D &p);
 
    void writeIdented(unsigned ident, string s);
    void cr();

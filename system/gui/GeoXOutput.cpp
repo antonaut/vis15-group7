@@ -185,6 +185,12 @@ GeoXOutput& GeoXOutput::operator<<(SparseMatrixF &A)
   return *this;
 }
 
+GeoXOutput& GeoXOutput::operator<<(const Point2D &p) {
+  (*this) << "(" << p.position[0] << ", " << p.position[1] << ")";
+  return *this;
+}
+
+
 
 void GeoXOutput::writeIdented(unsigned ident, string s) {
    string identsp;

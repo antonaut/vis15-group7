@@ -10,6 +10,8 @@
 
 #include <limits>
 #include "Field2.hpp"
+#include <vector>
+
 
 IMPLEMENT_GEOX_CLASS( AssignmentThree, 0)
 {
@@ -23,6 +25,7 @@ IMPLEMENT_GEOX_CLASS( AssignmentThree, 0)
 
     ADD_SEPARATOR("Marching Squares")
     ADD_FLOAT32_PROP(IsoValue, 0)
+    ADD_BOOLEAN_PROP(UseMidPointDecider, false)
     ADD_NOARGS_METHOD(AssignmentThree::MarchingSquares)
 
     ADD_SEPARATOR("Vectorfield")
@@ -40,12 +43,13 @@ QWidget* AssignmentThree::createViewer()
 AssignmentThree::AssignmentThree()
 {
     viewer = NULL;
-    ScalarfieldFilename = "/home/simon/Dropbox/KTH/5an/visualization/ass3/SimpleGrid.am";
-    
-    IsoValue = 3;
+    ScalarfieldFilename = "./data/assignment03/SimpleGrid.am";
 
+    IsoValue = 3.5;
+    UseMidPointDecider = true;
     VectorfieldFilename = "";
     ArrowScale = 0.1;
+    square_count = 0;
 }
 
 AssignmentThree::~AssignmentThree() {}
@@ -84,13 +88,13 @@ void AssignmentThree::DrawMesh() {
         Point2D p1, p2;
         p1.position = field.nodePosition(i, j);
         p2.position = field.nodePosition(i+1, j);
-    
+
 
         float32 x1 = p1.position[0];
         float32 y1 = p1.position[1];
         float32 x2 = p2.position[0];
         float32 y2 = p2.position[1];
-     
+
         viewer->addLine(x1, y1, x2, y2);
     }
 
@@ -98,26 +102,27 @@ void AssignmentThree::DrawMesh() {
         Point2D p1, p2;
         p1.position = field.nodePosition(i, j);
         p2.position = field.nodePosition(i, j+1);
-    
+
 
         float32 x1 = p1.position[0];
         float32 y1 = p1.position[1];
         float32 x2 = p2.position[0];
         float32 y2 = p2.position[1];
-     
+
         viewer->addLine(x1, y1, x2, y2);
     }
-    
+
     viewer->refresh();
 }
 
 float32 AssignmentThree::Interpolate(float32 xy1, float32 v1, float32 xy2, float32 v2) {
     float32 t = (IsoValue - v1) / (v2 - v1);
-
-    output << "(xy1, v1, xy2, v2) : " << "(" << xy1 << ", " << v1 << ", " << xy2 << ", " << v2 << ") : " << t << "\n"; 
-
-    return (1-t)*xy1 + t*xy2;;
+    float32 res = (1-t)*xy1 + t*xy2;
+    output << "Interpolation: (xy1, v1, xy2, v2) : " << "(" << xy1 << ", " << v1 << ", " << xy2 << ", " << v2 << ") : " << t << "\n";
+    output << "Yields: " << res << "\n";
+    return res;
 }
+
 
 void AssignmentThree::AddSingleContour(const Point2D &p1, float32 v1, const Point2D &p2, float32 v2, const Point2D &p3, float32 v3, const Point2D &p4, float32 v4) {
     float32 x1 = p1.position[0];
@@ -134,11 +139,11 @@ void AssignmentThree::AddSingleContour(const Point2D &p1, float32 v1, const Poin
     float32 line_x2 = Interpolate(x3, v3, x4, v4);
     float32 line_y2 = Interpolate(y3, v3, y4, v4);
 
-    viewer->addLine(line_x1, line_y1, line_x2, line_y2);    
+    viewer->addLine(line_x1, line_y1, line_x2, line_y2);
 }
 
-void AssignmentThree::AddContours(const Point2D &p1, float32 v1, const Point2D &p2, float32 v2, const Point2D &p3, float32 v3, const Point2D &p4, float32 v4) {
-    
+void AssignmentThree::AddContours(Point2D &p1, float32 v1, Point2D &p2, float32 v2, Point2D &p3, float32 v3, Point2D &p4, float32 v4) {
+    output << "\n\nAdding contours (" << square_count << ") for " << p1 << " v:" << v1 << ", " << p2 << " v:" << v2 << ", " << p3 << " v:" << v3 << ", " << p4 << " v:" << v4 << "\n";
     /*
      * No contours, return
      */
@@ -157,10 +162,12 @@ void AssignmentThree::AddContours(const Point2D &p1, float32 v1, const Point2D &
 
     if (v1 < IsoValue && v2 >= IsoValue && v3 >= IsoValue && v4 >= IsoValue) {
         AddSingleContour(p1, v1, p2, v2, p1, v1, p3, v3);
+        return;
     }
 
     if (v1 > IsoValue && v2 < IsoValue && v3 < IsoValue && v4 < IsoValue) {
         AddSingleContour(p1, v1, p2, v2, p1, v1, p3, v3);
+        return;
     }
 
     /*
@@ -169,10 +176,12 @@ void AssignmentThree::AddContours(const Point2D &p1, float32 v1, const Point2D &
 
     if (v2 < IsoValue && v1 >= IsoValue && v3 >= IsoValue && v4 >= IsoValue) {
         AddSingleContour(p2, v2, p1, v1, p2, v2, p4, v4);
+        return;
     }
 
     if (v2 >= IsoValue && v1 < IsoValue && v3 < IsoValue && v4 < IsoValue) {
         AddSingleContour(p2, v2, p1, v1, p2, v2, p4, v4);
+        return;
     }
 
     /*
@@ -181,10 +190,12 @@ void AssignmentThree::AddContours(const Point2D &p1, float32 v1, const Point2D &
 
     if (v3 < IsoValue && v1 >= IsoValue && v2 >= IsoValue && v4 >= IsoValue) {
         AddSingleContour(p3, v3, p1, v1, p3, v3, p4, v4);
+        return;
     }
 
     if (v3 >= IsoValue && v1 < IsoValue && v2 < IsoValue && v4 < IsoValue) {
         AddSingleContour(p3, v3, p1, v1, p3, v3, p4, v4);
+        return;
     }
 
     /*
@@ -193,10 +204,12 @@ void AssignmentThree::AddContours(const Point2D &p1, float32 v1, const Point2D &
 
     if (v4 < IsoValue && v1 >= IsoValue && v2 >= IsoValue && v3 >= IsoValue) {
         AddSingleContour(p4, v4, p2, v2, p4, v4, p3, v3);
+        return;
     }
 
     if (v4 >= IsoValue && v1 < IsoValue && v2 < IsoValue && v3 < IsoValue) {
         AddSingleContour(p4, v4, p2, v2, p4, v4, p3, v3);
+        return;
     }
 
     /*
@@ -205,10 +218,12 @@ void AssignmentThree::AddContours(const Point2D &p1, float32 v1, const Point2D &
 
     if (v1 < IsoValue && v3 < IsoValue && v2 >= IsoValue && v4 >= IsoValue) {
         AddSingleContour(p1, v1, p2, v2, p3, v3, p4, v4);
+        return;
     }
 
     if (v1 >= IsoValue && v3 >= IsoValue && v2 < IsoValue && v4 < IsoValue) {
         AddSingleContour(p1, v1, p2, v2, p3, v3, p4, v4);
+        return;
     }
 
     /*
@@ -217,16 +232,22 @@ void AssignmentThree::AddContours(const Point2D &p1, float32 v1, const Point2D &
 
     if (v1 < IsoValue && v2 < IsoValue && v3 >= IsoValue && v4 >= IsoValue) {
         AddSingleContour(p1, v1, p3, v3, p2, v2, p4, v4);
+        return;
     }
 
     if (v1 >= IsoValue && v2 >= IsoValue && v3 < IsoValue && v4 < IsoValue) {
         AddSingleContour(p1, v1, p3, v3, p2, v2, p4, v4);
+        return;
     }
 
     /*
      * Double contours
      */
 
+
+    bool reflect = v1 < IsoValue && v4 < IsoValue && v2 >= IsoValue && v3 >= IsoValue;
+    
+/*
     if (v1 < IsoValue && v4 < IsoValue && v2 >= IsoValue && v3 >= IsoValue) {
         AddSingleContour(p1, v1, p2, v2, p1, v1, p3, v3);
         AddSingleContour(p4, v4, p2, v2, p4, v4, p3, v3);
@@ -236,6 +257,88 @@ void AssignmentThree::AddContours(const Point2D &p1, float32 v1, const Point2D &
         AddSingleContour(p1, v1, p2, v2, p1, v1, p3, v3);
         AddSingleContour(p4, v4, p2, v2, p4, v4, p3, v3);
     }
+*/
+
+    float32 x1 = p1.position[0];
+    float32 y1 = p1.position[1];
+
+    float32 x2 = p2.position[0];
+    float32 y2 = p2.position[1];
+    
+    float32 x3 = p3.position[0];
+    float32 y3 = p3.position[1];
+    
+    float32 x4 = p4.position[0];
+    float32 y4 = p4.position[1];
+
+
+    float32 ip12 = Interpolate(x1, v1, x2, v2);
+    float32 ip24 = Interpolate(y2, v2, y4, v4);
+    float32 ip13 = Interpolate(y1, v1, y3, v3);
+    float32 ip34 = Interpolate(x3, v3, x4, v4);
+
+    Point2D pi12;
+    pi12.position[0] = ip12;
+    pi12.position[1] = y1;
+    Point2D pi24;
+    pi24.position[0] = x2;
+    pi24.position[1] = ip24;
+    Point2D pi13;
+    pi13.position[0] = x1;
+    pi13.position[1] = ip13;
+    Point2D pi34;
+    pi34.position[0] = ip34;
+    pi34.position[1] = y3;
+
+    output << "pi12: " << pi12 << " between " << p1 << " and " << p2 << ".\n";
+    output << "pi24: " << pi24 << " between " << p2 << " and " << p4 << ".\n";
+    output << "pi13: " << pi13 << " between " << p1 << " and " << p3 << ".\n";
+    output << "pi34: " << pi34 << " between " << p3 << " and " << p4 << ".\n";
+
+    /*
+     * Mid point decider.
+     */
+
+    if (UseMidPointDecider) {
+
+        float32 mv = 0.25*(v1+v2+v3+v4);
+        output << "mid value: " << mv << "\n";
+
+        if (mv >= IsoValue) {
+            DrawLineFromPoints(pi13, pi34);
+            DrawLineFromPoints(pi12, pi24);
+            return;
+        }
+
+        DrawLineFromPoints(pi13, pi12);
+        DrawLineFromPoints(pi34, pi24);
+        return;
+    }
+
+    /*
+     * Asymptotic decider.
+     */
+    std::vector<Point2D> points;
+
+    points.push_back(pi12);
+    points.push_back(pi13);
+    points.push_back(pi24);
+    points.push_back(pi34);
+
+    std::sort(points.begin(), points.end(), xcomp);
+
+    p1 = points[0];
+    p2 = points[1];
+    p3 = points[2];
+    p4 = points[3];
+
+    DrawLineFromPoints(p1, p2);
+    DrawLineFromPoints(p3, p4);
+}
+
+void AssignmentThree::DrawLineFromPoints(const Point2D& p1, const Point2D& p2) {
+    output << "Drawing a line between " << p1 << " and " << p2 << ".\n";
+    viewer->addLine(p1.position[0], p1.position[1], p2.position[0], p2.position[1]);
 }
 
 void AssignmentThree::MarchingSquares() {
@@ -263,6 +366,7 @@ void AssignmentThree::MarchingSquares() {
 
     output << "Min v: " << min_v << "\n";
     output << "Max v: " << max_v << "\n";
+    square_count = 0;
 
     for(size_t i = 0; i < field.dims()[0] - 1; ++i) {
         for(size_t j = 0; j < field.dims()[1] - 1; ++j) {
@@ -277,10 +381,29 @@ void AssignmentThree::MarchingSquares() {
             float32 v3 = field.nodeScalar(i, j+1);
             float32 v4 = field.nodeScalar(i+1, j+1);
 
+            ++square_count;
             AddContours(p1, v1, p2, v2, p3, v3, p4, v4);
         }
     }
-    
+
+    /* For debugging... */
+    //Draw a point for each grid vertex.
+    for(size_t j=0; j<field.dims()[1]; j++)
+    {
+        for(size_t i=0; i<field.dims()[0]; i++)
+        {
+            const float32 val = field.nodeScalar(i, j);
+            const float32 c = val < IsoValue ? 0 : 1;
+
+            Point2D p;
+            p.position  = field.nodePosition(i, j);
+            p.size = 5;
+            //Use a grayscale depending on the actual value
+            p.color[0] = c; p.color[1] = c; p.color[2] = c;
+            viewer->addPoint(p);
+        }
+    }
+
     viewer->refresh();
 }
 
@@ -361,3 +484,9 @@ namespace
         return n;
     }
 }
+
+///Used for sorting on x-value.
+bool xcomp(Point2D p1, Point2D p2) {
+    return p1.position[0] < p2.position[0];
+}
+
