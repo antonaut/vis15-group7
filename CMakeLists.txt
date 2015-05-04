@@ -148,9 +148,11 @@ SET(Experiment_SOURCES
     experiments/ExampleExperiment3DGraphics.cpp
     experiments/ExampleExperimentMarchingCubes.cpp
     experiments/AssignmentThree.cpp
-    experiments/ExampleSimple.cpp
+	experiments/AssignmentFour.cpp
+	experiments/ExampleSimple.cpp
     experiments/Experiment.cpp
 )
+
 
 
 QT4_ADD_RESOURCES(GeoX_resources images/geoX.qrc)
