@@ -35,7 +35,7 @@
 // include your experiments here
 
 #include "ExampleSimple.h"
-#include "AssignmentThree.h"
+//#include "AssignmentThree.h"
 #include "AssignmentFour.h"
 
 // ...
@@ -71,7 +71,7 @@ void init()
     // ...
     // register your experiments here
     ExampleSimple::init(Experiment::getClass());
-    AssignmentThree::init(Experiment::getClass());
+  //  AssignmentThree::init(Experiment::getClass());
 
 	AssignmentFour::init(Experiment::getClass());
     // ...
@@ -104,7 +104,7 @@ void shutdown()
     // ...
     // unregister your experiments here
     ExampleSimple::shutdown();
-    AssignmentThree::shutdown();
+   // AssignmentThree::shutdown();
 	AssignmentFour::shutdown();
     // ...
 }

@@ -350,6 +350,9 @@
     <ClCompile Include="..\experiments\ExampleExperimentFields.cpp">
       <Filter>experiments</Filter>
     </ClCompile>
+    <ClCompile Include="..\experiments\AssignmentFour.cpp">
+      <Filter>experiments</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -633,6 +636,9 @@
       <Filter>system\misc</Filter>
     </ClInclude>
     <ClInclude Include="..\experiments\ExampleExperimentFields.h">
+      <Filter>experiments</Filter>
+    </ClInclude>
+    <ClInclude Include="..\experiments\AssignmentFour.h">
       <Filter>experiments</Filter>
     </ClInclude>
   </ItemGroup>
