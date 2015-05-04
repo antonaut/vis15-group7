@@ -31,6 +31,8 @@ IMPLEMENT_GEOX_CLASS( AssignmentFour, 0)
 
     ADD_SEPARATOR("Vectorfield")
     ADD_STRING_PROP(VectorfieldFilename, 0)
+	ADD_FLOAT32_PROP(ArrowScale, 0)
+	//ADD_NOARGS_METHOD(AssignmentThree::DrawVectorField)
    
 	ADD_NOARGS_METHOD(AssignmentFour::LoadandRefreshVectorField)
 	ADD_NOARGS_METHOD(AssignmentFour::EulerStreamlines)
@@ -50,8 +52,8 @@ AssignmentFour::AssignmentFour()
 {
     viewer = NULL;
    
-	VectorfieldFilename = "C:\\Users\\Eyob\\Desktop\\vis15-group7\\data\\assignment05\\Sink.am";
-
+	//VectorfieldFilename = "C:\\Users\\Eyob\\Desktop\\Sink.am";
+	VectorfieldFilename = "./data/assignment05/Sink.am";
 	XStart = 1;
 	YStart = 0;
 	MaxDistance = 5.3;
@@ -61,6 +63,8 @@ AssignmentFour::AssignmentFour()
 	
 	RKStepSize = 0.3;
 	RKStep = 30;
+
+	ArrowScale = 0.1;
 
 }
 
@@ -72,6 +76,19 @@ void AssignmentFour::LoadVectorField() {
     {
         error("Error loading field file " + VectorfieldFilename + "\n");
     }
+	
+	//Draw vector directions (constant length)
+	for(float32 x=Field.boundMin()[0]; x<=Field.boundMax()[0]; x+=0.2)
+	{
+		for(float32 y=Field.boundMin()[1]; y<=Field.boundMax()[1]; y+=0.2)
+		{
+			Vector2f vec = Field.sample(x,y);
+			vec.normalize();
+
+			viewer->addLine(x, y, x + ArrowScale*vec[0], y + ArrowScale*vec[1]);
+		}
+	}
+	
 }
 
 void AssignmentFour::LoadandRefreshVectorField() {
@@ -103,7 +120,7 @@ vector<Vector2f> AssignmentFour::Integrator(int step, Vector2f (AssignmentFour::
 }
 
 Vector2f AssignmentFour::FieldValue(Vector2f xi) {
-	StaticVector<float, 1U> vec = Field.sample(xi[0], xi[1]);
+	StaticVector<float, 2U> vec = Field.sample(xi[0], xi[1]);
 	float x = vec[0];
 	float y = vec[1];
 	return makeVector2f(x,y);

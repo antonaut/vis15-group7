@@ -46,7 +46,7 @@ public:
 //Attributes
 public:
     ///The loaded field
-    ScalarField2 Field;
+    VectorField2 Field;
 
     ///File name of the vector field
     string VectorfieldFilename;
@@ -60,6 +60,7 @@ public:
 	float RKStepSize;
 	int RKStep;
 
+	float ArrowScale;
 	
 protected:
     GLGeometryViewer* viewer;
