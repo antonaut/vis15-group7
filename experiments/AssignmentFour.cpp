@@ -102,8 +102,4 @@ namespace
     }
 }
 
-///Used for sorting on x-value.
-bool xcomp(Point2D p1, Point2D p2) {
-    return p1.position[0] < p2.position[0];
-}
 
