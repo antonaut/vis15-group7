@@ -21,8 +21,13 @@ private:
 	Vector2f Euler(Vector2f);
 	Vector2f RK4(Vector2f);
 	Vector2f FieldValue(Vector2f);
+	Vector2f ExampleFieldValue(Vector2f);
+	void DrawVectorFieldHelper();
+	bool IsTooSlow(Vector2f);
 
     //Attrs
+	Vector2f(AssignmentFour::*VectorFieldAccessor)(Vector2f);
+	bool UseVectorField;
 
 //Constructor / Destructor
 public:
@@ -36,11 +41,12 @@ public:
 	void RungeKuttaStreamlines();
 	void GoodStepSize();
 
+	void UseEllipseField();
     void DrawVectorField();
 	void DrawStreamlines(vector<Vector2f>);
 
 	Vector2f Method(Vector2f);
-	vector<Vector2f> Integrator(int, Vector2f (AssignmentFour::*)(Vector2f));
+	vector<Vector2f> Integrator(int, Vector2f(AssignmentFour::*)(Vector2f));
     virtual QWidget* createViewer();
 
 //Attributes
@@ -58,7 +64,10 @@ public:
 	int EulerStep;
 	//RK
 	float RKStepSize;
+	float MaxArchLength;
 	int RKStep;
+
+	bool DirectionFieldOnly;
 
 	float ArrowScale;
 	
