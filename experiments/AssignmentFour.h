@@ -26,7 +26,11 @@ private:
 	bool IsTooSlow(Vector2f);
 
     //Attrs
+
+	///The method used to get vector field data.
 	Vector2f(AssignmentFour::*VectorFieldAccessor)(Vector2f);
+
+	///Should we use the vector field or the example field
 	bool UseVectorField;
 
 //Constructor / Destructor
@@ -37,13 +41,14 @@ public:
 //Methods
 public:
     void LoadandRefreshVectorField();
-	void EulerStreamlines();
-	void RungeKuttaStreamlines();
+	void EulerStreamline();
+	void RungeKuttaStreamline();
+
 	void GoodStepSize();
 
 	void UseEllipseField();
     void DrawVectorField();
-	void DrawStreamlines(vector<Vector2f>);
+	void DrawStreamline(vector<Vector2f>);
 
 	Vector2f Method(Vector2f);
 	vector<Vector2f> Integrator(int, Vector2f(AssignmentFour::*)(Vector2f));

@@ -38,8 +38,8 @@ IMPLEMENT_GEOX_CLASS( AssignmentFour, 0)
 	
 	ADD_NOARGS_METHOD(AssignmentFour::UseEllipseField)
 	ADD_NOARGS_METHOD(AssignmentFour::LoadandRefreshVectorField)
-	ADD_NOARGS_METHOD(AssignmentFour::EulerStreamlines)
-	ADD_NOARGS_METHOD(AssignmentFour::RungeKuttaStreamlines)
+	ADD_NOARGS_METHOD(AssignmentFour::EulerStreamline)
+	ADD_NOARGS_METHOD(AssignmentFour::RungeKuttaStreamline)
 	ADD_NOARGS_METHOD(AssignmentFour::GoodStepSize)
 
 
@@ -73,7 +73,7 @@ AssignmentFour::AssignmentFour()
 	DirectionFieldOnly = false;
 	
 	UseVectorField = false;
-	// The method used to get vector field data.
+
 	VectorFieldAccessor = &AssignmentFour::ExampleFieldValue;
 }
 
@@ -194,16 +194,16 @@ Vector2f AssignmentFour::RK4(Vector2f xi)
 }
 
 
-void AssignmentFour::EulerStreamlines()
+void AssignmentFour::EulerStreamline()
 {
 	vector<Vector2f> path = Integrator(EulerStep, &AssignmentFour::Euler);
 
-	DrawStreamlines(path);
+	DrawStreamline(path);
 }
-void AssignmentFour::RungeKuttaStreamlines()
+void AssignmentFour::RungeKuttaStreamline()
 {
 	vector<Vector2f> path = Integrator(RKStep, &AssignmentFour::RK4);
-	DrawStreamlines(path);
+	DrawStreamline(path);
 }
 
 void AssignmentFour::GoodStepSize()
@@ -211,7 +211,7 @@ void AssignmentFour::GoodStepSize()
 	/* TODO */
 }
 
-void AssignmentFour::DrawStreamlines(vector<Vector2f> path)
+void AssignmentFour::DrawStreamline(vector<Vector2f> path)
 {
 	int arraySize = path.size();
 	if (arraySize < 2) {
