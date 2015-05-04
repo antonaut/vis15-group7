@@ -353,6 +353,12 @@
     <ClCompile Include="..\experiments\AssignmentFour.cpp">
       <Filter>experiments</Filter>
     </ClCompile>
+    <ClCompile Include="..\experiments\AssignmentThree.cpp">
+      <Filter>experiments</Filter>
+    </ClCompile>
+    <ClCompile Include="..\experiments\ExampleSimple.cpp">
+      <Filter>experiments</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -639,6 +645,12 @@
       <Filter>experiments</Filter>
     </ClInclude>
     <ClInclude Include="..\experiments\AssignmentFour.h">
+      <Filter>experiments</Filter>
+    </ClInclude>
+    <ClInclude Include="..\experiments\AssignmentThree.h">
+      <Filter>experiments</Filter>
+    </ClInclude>
+    <ClInclude Include="..\experiments\ExampleSimple.h">
       <Filter>experiments</Filter>
     </ClInclude>
   </ItemGroup>

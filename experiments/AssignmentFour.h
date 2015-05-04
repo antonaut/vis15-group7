@@ -18,10 +18,11 @@ class AssignmentFour : public Experiment
 private:
     //Methods
     void LoadVectorField();
+	Vector2f Euler(Vector2f);
+	Vector2f RK4(Vector2f);
+	Vector2f FieldValue(Vector2f);
 
     //Attrs
-    int square_count;
-    Vector4f isocolor;
 
 //Constructor / Destructor
 public:
@@ -30,8 +31,16 @@ public:
 
 //Methods
 public:
-    void DrawMesh();
+    void LoadandRefreshVectorField();
+	void EulerStreamlines();
+	void RungeKuttaStreamlines();
+	void GoodStepSize();
+
     void DrawVectorField();
+	void DrawStreamlines(vector<Vector2f>);
+
+	Vector2f Method(Vector2f);
+	vector<Vector2f> Integrator(int, Vector2f (AssignmentFour::*)(Vector2f));
     virtual QWidget* createViewer();
 
 //Attributes
@@ -42,8 +51,15 @@ public:
     ///File name of the vector field
     string VectorfieldFilename;
 
-    ///Length of the arrows
-    float ArrowScale;
+ 
+	float XStart, YStart, MaxDistance;
+	//Euler
+	float EulerStepSize;
+	int EulerStep;
+	//RK
+	float RKStepSize;
+	int RKStep;
+
 	
 protected:
     GLGeometryViewer* viewer;

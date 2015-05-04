@@ -19,3 +19,5 @@ windows/GeoX_VS2010.opensdf
 windows/GeoX_VS2010.sdf
 windows/GeoX_VS2010.suo
 windows/ipch/
+windows/Debug/
+windows/Release/
