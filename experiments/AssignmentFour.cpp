@@ -67,7 +67,7 @@ AssignmentFour::AssignmentFour()
     viewer = NULL;
    
 	//VectorfieldFilename = "C:\\Users\\Eyob\\Desktop\\Sink.am";
-	VectorfieldFilename = "/home/simon/Git/vis15-group7/data/assignment05/ANoise2CT4.am";
+	VectorfieldFilename = "./vis15-group7/data/assignment05/ANoise2CT4.am";
 	XStart = 1;
 	YStart = 0;
 	MaxDistance = 5.3;
