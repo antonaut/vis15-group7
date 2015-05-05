@@ -24,6 +24,11 @@ private:
 	Vector2f ExampleFieldValue(Vector2f);
 	void DrawVectorFieldHelper();
 	bool IsTooSlow(Vector2f);
+	float32 randomFloat(float32, float32);
+	vector<Vector2f> magnitudeDistribution(int n);
+	void magnitudeDistributionHelper(int n, float32 minX, float32 maxX, float32 minY, float32 maxY, vector<Vector2f> &);
+	float32 getMagnitude(Vector2f);
+	bool magSort(const pair<float32, Vector2f> &m1, const pair<float32, Vector2f> &m2);
 
     //Attrs
 
@@ -43,15 +48,17 @@ public:
     void LoadandRefreshVectorField();
 	void EulerStreamline();
 	void RungeKuttaStreamline();
+	void SeedingStreamLines();
+	void DistributionSeed();
 
 	void GoodStepSize();
 
 	void UseEllipseField();
     void DrawVectorField();
-	void DrawStreamline(vector<Vector2f>);
+	void DrawStreamline(vector<Vector2f>, const Vector4f &color);
 
 	Vector2f Method(Vector2f);
-	vector<Vector2f> Integrator(int, Vector2f(AssignmentFour::*)(Vector2f));
+	vector<Vector2f> Integrator(int, Vector2f(AssignmentFour::*)(Vector2f), float32 x, float32 y);
     virtual QWidget* createViewer();
 
 //Attributes
@@ -61,6 +68,8 @@ public:
 
     ///File name of the vector field
     string VectorfieldFilename;
+
+	bool NormalizeVectorField;
 
  
 	float XStart, YStart, MaxDistance;
@@ -75,9 +84,17 @@ public:
 	bool DirectionFieldOnly;
 
 	float ArrowScale;
+
+	// Seeding Stream Lines
+	int NumStreamLines;
+	bool DrawField;
+	bool GridSeed;
+	int GridPointsX;
+	int GridPointsY;
 	
 protected:
     GLGeometryViewer* viewer;
+
 };
 
 #endif
