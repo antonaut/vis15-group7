@@ -51,8 +51,6 @@ public:
 	void SeedingStreamLines();
 	void DistributionSeed();
 
-	void GoodStepSize();
-
 	void UseEllipseField();
     void DrawVectorField();
 	void DrawStreamline(vector<Vector2f>, const Vector4f &color);
@@ -70,6 +68,8 @@ public:
     string VectorfieldFilename;
 
 	bool NormalizeVectorField;
+	bool IntegrateBackwards;
+	bool ShowPoints;
 
  
 	float XStart, YStart, MaxDistance;

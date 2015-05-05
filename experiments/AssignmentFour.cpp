@@ -22,6 +22,8 @@ IMPLEMENT_GEOX_CLASS( AssignmentFour, 0)
 
 	ADD_SEPARATOR("Options")
 	ADD_BOOLEAN_PROP(DirectionFieldOnly, 0)
+	ADD_BOOLEAN_PROP(IntegrateBackwards, 0)
+	ADD_BOOLEAN_PROP(ShowPoints, 0)
 
 	ADD_SEPARATOR("Euler")
 	ADD_FLOAT32_PROP(EulerStepSize, 0)
@@ -49,7 +51,6 @@ IMPLEMENT_GEOX_CLASS( AssignmentFour, 0)
 	ADD_NOARGS_METHOD(AssignmentFour::LoadandRefreshVectorField)
 	ADD_NOARGS_METHOD(AssignmentFour::EulerStreamline)
 	ADD_NOARGS_METHOD(AssignmentFour::RungeKuttaStreamline)
-	ADD_NOARGS_METHOD(AssignmentFour::GoodStepSize)
 	ADD_NOARGS_METHOD(AssignmentFour::SeedingStreamLines)
 	ADD_NOARGS_METHOD(AssignmentFour::DistributionSeed)
 
@@ -82,7 +83,9 @@ AssignmentFour::AssignmentFour()
 	MaxArchLength = -1.0f;
 
 	DirectionFieldOnly = false;
-	
+	IntegrateBackwards = false;
+	ShowPoints = false;
+
 	UseVectorField = false;
 
 	VectorFieldAccessor = &AssignmentFour::ExampleFieldValue;
@@ -129,7 +132,9 @@ void AssignmentFour::DrawVectorFieldHelper() {
 			float32 y2 = y + ArrowScale*vec[1];
 
 			viewer->addLine(x, y, x2, y2);
-			viewer->addPoint(Point2D(x2, y2));
+			if (ShowPoints) {
+				viewer->addPoint(Point2D(x2, y2));
+			}
 		}
 	}
 }
@@ -164,6 +169,7 @@ AssignmentFour::Integrator(
 
 	xi[0] = xstart;
 	xi[1] = ystart;
+
 	//xi.normalize();
 	path.push_back(xi);
 
@@ -187,7 +193,7 @@ AssignmentFour::Integrator(
 		path.push_back(xp);
 		
 		arcLength += (xp - xi).getSqrNorm();
-
+		
 		if (arcLength > MaxDistance) {
 			output << "Stopped early after " << i << " steps. (Maximum distance)\n";
 			return path;
@@ -201,11 +207,13 @@ AssignmentFour::Integrator(
 
 Vector2f AssignmentFour::FieldValue(Vector2f xi) {
 	StaticVector<float, 2U> vec = Field.sample(xi[0], xi[1]);
-	return makeVector2f(vec[0], vec[1]);
+	Vector2f v = makeVector2f(vec[0], vec[1]);
+	return IntegrateBackwards ? -v : v;
 }
 
 Vector2f AssignmentFour::ExampleFieldValue(Vector2f vec) {
-	return makeVector2f(-vec[1], vec[0] / 2.0f);
+	Vector2f v = makeVector2f(-vec[1], vec[0] / 2.0f);
+	return IntegrateBackwards ? -v : v;
 }
 
 Vector2f AssignmentFour::Euler(Vector2f xi)
@@ -302,10 +310,6 @@ vector<Vector2f> AssignmentFour::magnitudeDistribution(int n) {
 }
 
 
-void AssignmentFour::GoodStepSize()
-{
-	// TODO
-}
 
 void AssignmentFour::SeedingStreamLines()
 {
@@ -387,10 +391,16 @@ void AssignmentFour::DrawStreamline(vector<Vector2f> path, const Vector4f &color
 	{
 		p2 = path[i];
 		viewer->addLine(p1[0], p1[1], p2[0], p2[1], color);
-		viewer->addPoint(p1);
+		if (ShowPoints) {
+			viewer->addPoint(p1);
+		}
 		p1 = p2;
+		viewer->refresh();
 	}
-	viewer->addPoint(path[arraySize-1]);
+	if (ShowPoints) {
+		viewer->addPoint(path[arraySize - 1]);
+	}
+	viewer->refresh();
 }
 
 void AssignmentFour::DrawVectorField()
