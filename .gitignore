@@ -13,3 +13,10 @@ Makefile
 qrc_geoX.cxx
 ui_*.h
 *.cxx_parameters
+
+#platform specific stuffs
+windows/*
+system/gui/*
+images/moc/*
+system/properties/moc/*
+viewers/widgets/moc/*

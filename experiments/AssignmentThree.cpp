@@ -385,8 +385,8 @@ void AssignmentThree::IsoContours() {
         MarchingSquaresHelper();
         isocolor = makeVector4f(isocolor[0]-deltaColor, 0.0, isocolor[2]+deltaColor, 1.0);
         IsoValue -= deltaIso;
+        viewer->refresh();
     }
-    viewer->refresh();
 }
 
 void AssignmentThree::MarchingSquares() {
