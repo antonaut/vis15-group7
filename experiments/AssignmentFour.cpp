@@ -361,13 +361,24 @@ IMPLEMENT_GEOX_CLASS( AssignmentFour, 0)
     ADD_SEPARATOR("Vectorfield")
     ADD_STRING_PROP(VectorfieldFilename, 0)
 	ADD_FLOAT32_PROP(ArrowScale, 0)
-	//ADD_NOARGS_METHOD(AssignmentThree::DrawVectorField)
+	ADD_BOOLEAN_PROP(NormalizeVectorField, 0);
+
+    ADD_SEPARATOR("Seeding of Stream Lines")
+	ADD_INT32_PROP(NumStreamLines, 0)
+	ADD_BOOLEAN_PROP(DrawField, 0)
+	ADD_BOOLEAN_PROP(GridSeed, 0)
+	ADD_INT32_PROP(GridPointsX, 0)
+	ADD_INT32_PROP(GridPointsY, 0)
+	
+	ADD_NOARGS_METHOD(AssignmentFour::DrawVectorField)
 	
 	ADD_NOARGS_METHOD(AssignmentFour::UseEllipseField)
 	ADD_NOARGS_METHOD(AssignmentFour::LoadandRefreshVectorField)
 	ADD_NOARGS_METHOD(AssignmentFour::EulerStreamline)
 	ADD_NOARGS_METHOD(AssignmentFour::RungeKuttaStreamline)
 	ADD_NOARGS_METHOD(AssignmentFour::GoodStepSize)
+	ADD_NOARGS_METHOD(AssignmentFour::SeedingStreamLines)
+	ADD_NOARGS_METHOD(AssignmentFour::DistributionSeed)
 
 
 }
@@ -383,7 +394,7 @@ AssignmentFour::AssignmentFour()
     viewer = NULL;
    
 	//VectorfieldFilename = "C:\\Users\\Eyob\\Desktop\\Sink.am";
-	VectorfieldFilename = "./data/assignment05/Sink.am";
+	VectorfieldFilename = "/home/simon/Git/vis15-group7/data/assignment05/ANoise2CT4.am";
 	XStart = 1;
 	YStart = 0;
 	MaxDistance = 5.3;
@@ -402,6 +413,13 @@ AssignmentFour::AssignmentFour()
 	UseVectorField = false;
 
 	VectorFieldAccessor = &AssignmentFour::ExampleFieldValue;
+	NormalizeVectorField = false;
+
+	NumStreamLines = 1600;
+	GridPointsX = 40;
+	GridPointsY = 40;
+	DrawField = true;
+	GridSeed = false;
 }
 
 AssignmentFour::~AssignmentFour() {}
@@ -429,9 +447,16 @@ void AssignmentFour::DrawVectorFieldHelper() {
 		for (float32 y = Field.boundMin()[1]; y <= Field.boundMax()[1]; y += 0.2)
 		{
 			Vector2f vec = Field.sample(x, y);
-			vec.normalize();
 
-			viewer->addLine(x, y, x + ArrowScale*vec[0], y + ArrowScale*vec[1]);
+			if (NormalizeVectorField) {
+				vec.normalize();
+			}
+
+			float32 x2 = x + ArrowScale*vec[0];
+			float32 y2 = y + ArrowScale*vec[1];
+
+			viewer->addLine(x, y, x2, y2);
+			viewer->addPoint(Point2D(x2, y2));
 		}
 	}
 }
@@ -456,16 +481,17 @@ bool AssignmentFour::IsTooSlow(Vector2f vec) {
 vector<Vector2f> 
 AssignmentFour::Integrator(
 	int numberOfSteps, 
-	Vector2f(AssignmentFour::*Method)(Vector2f)
+	Vector2f(AssignmentFour::*Method)(Vector2f),
+	float32 xstart, float32 ystart
 )
 {
 	Vector2f xi;
 	vector<Vector2f> path;
 	float32 arcLength = 0.0f;
 
-	xi[0] = XStart;
-	xi[1] = YStart;
-	xi.normalize();
+	xi[0] = xstart;
+	xi[1] = ystart;
+	//xi.normalize();
 	path.push_back(xi);
 
 	for (int i = 0; i < numberOfSteps; i++)
@@ -488,6 +514,11 @@ AssignmentFour::Integrator(
 		path.push_back(xp);
 		
 		arcLength += (xp - xi).getSqrNorm();
+
+		if (arcLength > MaxDistance) {
+			output << "Stopped early after " << i << " steps. (Maximum distance)\n";
+			return path;
+		}
 		
 		xi = xp;
 	}
@@ -523,22 +554,155 @@ Vector2f AssignmentFour::RK4(Vector2f xi)
 
 void AssignmentFour::EulerStreamline()
 {
-	vector<Vector2f> path = Integrator(EulerStep, &AssignmentFour::Euler);
+	Vector4f color = makeVector4f(1, 1, 0, 1);
 
-	DrawStreamline(path);
+	output << "Calculating integration points...";
+	vector<Vector2f> path = Integrator(EulerStep, &AssignmentFour::Euler, XStart, YStart);
+	output << "done\n";
+
+	output << "Drawing stream line...";
+	DrawStreamline(path, color);
+	output << "done\n";
 }
+
 void AssignmentFour::RungeKuttaStreamline()
 {
-	vector<Vector2f> path = Integrator(RKStep, &AssignmentFour::RK4);
-	DrawStreamline(path);
+	Vector4f color = makeVector4f(1, 0, 1, 1);
+	
+	vector<Vector2f> path = Integrator(RKStep, &AssignmentFour::RK4, XStart, YStart);
+	DrawStreamline(path, color);
 }
+
+float32 AssignmentFour::randomFloat(float32 a, float32 b) {
+    float32 random = ((float32) rand()) / (float32) RAND_MAX;
+    float32 diff = b - a;
+    float32 r = random * diff;
+    return a + r;
+}
+
+float32 AssignmentFour::getMagnitude(Vector2f xi) {
+	return (this->*VectorFieldAccessor)(xi).getSqrNorm();
+}
+
+void AssignmentFour::magnitudeDistributionHelper(int n, float32 minX, float32 maxX, float32 minY, float32 maxY, vector<Vector2f> &points) {
+	float32 spread = (float32) (sqrt(n) * 1.2);
+
+	float32 dx = (maxX - minX) / spread;
+	float32 dy = (maxY - minY) / spread;
+
+	if (n <= 0) {
+		return;
+	}
+
+	vector< pair<float32, Vector2f> > magnitudes;
+
+	for (int xi = 0; xi < n; ++xi) {
+		for (int yi = 0; yi < n; ++yi) {
+			float32 x = minX + xi*dx;
+			float32 y = minY + yi*dy;
+			Vector2f v = makeVector2f(x, y);
+			float32 magnitude = getMagnitude(v);
+			magnitudes.push_back(make_pair(magnitude, v));
+		}
+	}
+
+	sort(magnitudes.begin(), magnitudes.end(), [](const pair<float32, Vector2f> &m1, const pair<float32, Vector2f> &m2) -> bool {
+		return m1.first > m2.first;
+	});
+
+	for (size_t i = 0; i < (size_t) n; ++i) {
+		points.push_back(magnitudes[i].second);
+	}
+}
+
+vector<Vector2f> AssignmentFour::magnitudeDistribution(int n) {
+	float32 minX = Field.boundMin()[0]; 
+	float32 maxX = Field.boundMax()[0];
+	float32 minY = Field.boundMin()[1]; 
+	float32 maxY = Field.boundMax()[1];
+
+	vector<Vector2f> points;
+
+	magnitudeDistributionHelper(n, minX, maxX, minY, maxY, points);
+
+	return points;
+}
+
 
 void AssignmentFour::GoodStepSize()
 {
-	/* TODO */
+	// TODO
 }
 
-void AssignmentFour::DrawStreamline(vector<Vector2f> path)
+void AssignmentFour::SeedingStreamLines()
+{
+	viewer->clear();
+
+	if (DrawField) {
+		DrawVectorFieldHelper();
+	}
+
+	Vector4f color = makeVector4f(0.8f, 0.2f, 0.0f, 0.40f);
+	float32 minX = Field.boundMin()[0]; 
+	float32 maxX = Field.boundMax()[0];
+	float32 minY = Field.boundMin()[1]; 
+	float32 maxY = Field.boundMax()[1];
+	
+	if (GridSeed) {
+		float32 dx = (maxX - minX) / GridPointsX;
+		float32 dy = (maxY - minY) / GridPointsY;
+		float32 x = minX; 
+
+		for (int ix = 0; ix < GridPointsX; ++ix) {
+			float32 y = minY;
+			for (int iy = 0; iy < GridPointsY; ++iy) {
+				vector<Vector2f> path = Integrator(RKStep, &AssignmentFour::RK4, x, y);
+				DrawStreamline(path, color);				
+
+				y += dy;
+			}
+			x += dx;
+		}
+	}
+	else {
+		int n = NumStreamLines;
+
+		for (int i = 0; i < n; ++i) {
+			float32 x = randomFloat(minX, maxX);
+			float32 y = randomFloat(minY, maxY);
+
+			vector<Vector2f> path = Integrator(RKStep, &AssignmentFour::RK4, x, y);
+			DrawStreamline(path, color);
+		}
+	}
+
+	viewer->refresh();
+}
+
+void AssignmentFour::DistributionSeed() {
+	viewer->clear();
+
+	if (DrawField) {
+		DrawVectorFieldHelper();
+	}
+
+	Vector4f color = makeVector4f(0.8f, 0.2f, 0.0f, 0.40f);
+
+	vector<Vector2f> points = magnitudeDistribution(NumStreamLines);
+
+	for (size_t i = 0; i < points.size(); ++i) {
+		float32 x = points[i][0];
+		float32 y = points[i][1];
+		vector<Vector2f> path = Integrator(RKStep, &AssignmentFour::RK4, x, y);
+		DrawStreamline(path, color);
+
+		output << "x: " << x << "\ty:" << y << "\n";
+	}
+
+	viewer->refresh();
+}
+
+void AssignmentFour::DrawStreamline(vector<Vector2f> path, const Vector4f &color)
 {
 	int arraySize = path.size();
 	if (arraySize < 2) {
@@ -549,7 +713,7 @@ void AssignmentFour::DrawStreamline(vector<Vector2f> path)
 	for(int i=1; i<arraySize; i++)
 	{
 		p2 = path[i];
-		viewer->addLine(p1[0],p1[1], p2[0], p2[1]);
+		viewer->addLine(p1[0], p1[1], p2[0], p2[1], color);
 		viewer->addPoint(p1);
 		p1 = p2;
 	}

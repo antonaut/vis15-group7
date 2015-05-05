@@ -153,6 +153,7 @@ SET(Experiment_SOURCES
     experiments/Experiment.cpp
 )
 
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 QT4_ADD_RESOURCES(GeoX_resources images/geoX.qrc)
 

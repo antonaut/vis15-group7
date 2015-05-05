@@ -20,3 +20,7 @@ system/gui/*
 images/moc/*
 system/properties/moc/*
 viewers/widgets/moc/*
+
+
+.idea
+
