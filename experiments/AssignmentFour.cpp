@@ -96,6 +96,8 @@ AssignmentFour::AssignmentFour()
 	GridPointsY = 40;
 	DrawField = true;
 	GridSeed = false;
+
+	arcLength = 0.0f;
 }
 
 AssignmentFour::~AssignmentFour() {}
@@ -165,7 +167,7 @@ AssignmentFour::Integrator(
 {
 	Vector2f xi;
 	vector<Vector2f> path;
-	float32 arcLength = 0.0f;
+	arcLength = 0.0f;
 
 	xi[0] = xstart;
 	xi[1] = ystart;
@@ -186,9 +188,8 @@ AssignmentFour::Integrator(
 		}
 
 		path.push_back(xp);
-		
 		arcLength += (xp - xi).getSqrNorm();
-		
+
 		if (arcLength > MaxDistance) {
 			output << "Stopped early after " << i << " steps. (Maximum distance)\n";
 			return path;
@@ -203,6 +204,7 @@ AssignmentFour::Integrator(
 Vector2f AssignmentFour::FieldValue(Vector2f xi) {
 	StaticVector<float, 2U> vec = Field.sample(xi[0], xi[1]);
 	Vector2f v = makeVector2f(vec[0], vec[1]);
+	if (DirectionFieldOnly) v.normalize();
 	return IntegrateBackwards ? -v : v;
 }
 
@@ -214,24 +216,16 @@ Vector2f AssignmentFour::ExampleFieldValue(Vector2f vec) {
 Vector2f AssignmentFour::Euler(Vector2f xi)
 {
 	Vector2f xp = xi + (this->*VectorFieldAccessor)(xi)*EulerStepSize;
-	return DirectionFieldOnly ? xp.normalize() : xp;
+	return xp;
 }
 
 Vector2f AssignmentFour::RK4(Vector2f xi)
 {
 	Vector2f v1, v2, v3, v4;
 	v1 = (this->*VectorFieldAccessor)(xi);
-	v1 = DirectionFieldOnly ? v1.normalize : v1;
-
 	v2 = (this->*VectorFieldAccessor)(xi + (v1 * (RKStepSize / 2.0f)));
-	v2 = DirectionFieldOnly ? v2.normalize : v2;
-
 	v3 = (this->*VectorFieldAccessor)(xi + (v2 * (RKStepSize / 2.0f)));
-	v3 = DirectionFieldOnly ? v3.normalize : v3;
-
 	v4 = (this->*VectorFieldAccessor)(xi + (v3 * RKStepSize));
-	v4 = DirectionFieldOnly ? v4.normalize : v4;
-
 	return xi + (v1 + v2 * 2.0f + v3 * 2.0f + v4) * RKStepSize / 6.0f;
 }
 
