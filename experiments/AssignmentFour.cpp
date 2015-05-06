@@ -170,7 +170,6 @@ AssignmentFour::Integrator(
 	xi[0] = xstart;
 	xi[1] = ystart;
 
-	//xi.normalize();
 	path.push_back(xi);
 
 	for (int i = 0; i < numberOfSteps; i++)
@@ -184,10 +183,6 @@ AssignmentFour::Integrator(
 		if (UseVectorField && !Field.insideBounds(xp)) {
 			output << "Stopped early after " << i << " steps. (Outside bounds)\n";
 			return path;
-		}
-
-		if (DirectionFieldOnly) {
-			xp.normalize();
 		}
 
 		path.push_back(xp);
@@ -219,16 +214,24 @@ Vector2f AssignmentFour::ExampleFieldValue(Vector2f vec) {
 Vector2f AssignmentFour::Euler(Vector2f xi)
 {
 	Vector2f xp = xi + (this->*VectorFieldAccessor)(xi)*EulerStepSize;
-	return xp;
+	return DirectionFieldOnly ? xp.normalize() : xp;
 }
 
 Vector2f AssignmentFour::RK4(Vector2f xi)
 {
 	Vector2f v1, v2, v3, v4;
 	v1 = (this->*VectorFieldAccessor)(xi);
+	v1 = DirectionFieldOnly ? v1.normalize : v1;
+
 	v2 = (this->*VectorFieldAccessor)(xi + (v1 * (RKStepSize / 2.0f)));
+	v2 = DirectionFieldOnly ? v2.normalize : v2;
+
 	v3 = (this->*VectorFieldAccessor)(xi + (v2 * (RKStepSize / 2.0f)));
+	v3 = DirectionFieldOnly ? v3.normalize : v3;
+
 	v4 = (this->*VectorFieldAccessor)(xi + (v3 * RKStepSize));
+	v4 = DirectionFieldOnly ? v4.normalize : v4;
+
 	return xi + (v1 + v2 * 2.0f + v3 * 2.0f + v4) * RKStepSize / 6.0f;
 }
 
@@ -376,7 +379,7 @@ void AssignmentFour::DistributionSeed() {
 		output << "x: " << x << "\ty:" << y << "\n";
 	}
 
-	viewer->refresh();
+	//viewer->refresh();
 }
 
 void AssignmentFour::DrawStreamline(vector<Vector2f> path, const Vector4f &color)
