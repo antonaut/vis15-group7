@@ -37,6 +37,7 @@ private:
 
 	///Should we use the vector field or the example field
 	bool UseVectorField;
+	float arcLength;
 
 //Constructor / Destructor
 public:

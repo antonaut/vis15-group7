@@ -96,6 +96,8 @@ AssignmentFour::AssignmentFour()
 	GridPointsY = 40;
 	DrawField = true;
 	GridSeed = false;
+
+	arcLength = 0.0f;
 }
 
 AssignmentFour::~AssignmentFour() {}
@@ -165,12 +167,11 @@ AssignmentFour::Integrator(
 {
 	Vector2f xi;
 	vector<Vector2f> path;
-	float32 arcLength = 0.0f;
+	arcLength = 0.0f;
 
 	xi[0] = xstart;
 	xi[1] = ystart;
 
-	//xi.normalize();
 	path.push_back(xi);
 
 	for (int i = 0; i < numberOfSteps; i++)
@@ -186,14 +187,9 @@ AssignmentFour::Integrator(
 			return path;
 		}
 
-		if (DirectionFieldOnly) {
-			xp.normalize();
-		}
-
 		path.push_back(xp);
-		
 		arcLength += (xp - xi).getSqrNorm();
-		
+
 		if (arcLength > MaxDistance) {
 			output << "Stopped early after " << i << " steps. (Maximum distance)\n";
 			return path;
@@ -208,6 +204,7 @@ AssignmentFour::Integrator(
 Vector2f AssignmentFour::FieldValue(Vector2f xi) {
 	StaticVector<float, 2U> vec = Field.sample(xi[0], xi[1]);
 	Vector2f v = makeVector2f(vec[0], vec[1]);
+	if (DirectionFieldOnly) v.normalize();
 	return IntegrateBackwards ? -v : v;
 }
 
@@ -376,7 +373,7 @@ void AssignmentFour::DistributionSeed() {
 		output << "x: " << x << "\ty:" << y << "\n";
 	}
 
-	viewer->refresh();
+	//viewer->refresh();
 }
 
 void AssignmentFour::DrawStreamline(vector<Vector2f> path, const Vector4f &color)

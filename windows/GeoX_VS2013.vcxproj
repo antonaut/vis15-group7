@@ -110,6 +110,7 @@
     <ClCompile Include="..\experiments\ExampleExperimentScatterPlot.cpp" />
     <ClCompile Include="..\experiments\ExampleSimple.cpp" />
     <ClCompile Include="..\system\misc\AMLoader.cpp" />
+    <ClCompile Include="AssignmentSix.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
@@ -222,6 +223,7 @@
     <ClInclude Include="..\math\Field2.hpp" />
     <ClInclude Include="..\math\GridData.hpp" />
     <ClInclude Include="..\system\misc\AMLoader.hpp" />
+    <ClInclude Include="AssignmentSix.h" />
     <ClInclude Include="stdafx.h" />
     <CustomBuild Include="..\geoX\GeoXMainWindow.h">
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">moc: compiling %(Filename).h</Message>

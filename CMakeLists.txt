@@ -149,6 +149,7 @@ SET(Experiment_SOURCES
     experiments/ExampleExperimentMarchingCubes.cpp
     experiments/AssignmentThree.cpp
     experiments/AssignmentFour.cpp
+	experiments/AssignmentSix.cpp
     experiments/ExampleSimple.cpp
     experiments/Experiment.cpp
 )

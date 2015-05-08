@@ -359,6 +359,9 @@
     <ClCompile Include="..\experiments\ExampleSimple.cpp">
       <Filter>experiments</Filter>
     </ClCompile>
+    <ClCompile Include="AssignmentSix.cpp">
+      <Filter>experiments</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -651,6 +654,9 @@
       <Filter>experiments</Filter>
     </ClInclude>
     <ClInclude Include="..\experiments\ExampleSimple.h">
+      <Filter>experiments</Filter>
+    </ClInclude>
+    <ClInclude Include="AssignmentSix.h">
       <Filter>experiments</Filter>
     </ClInclude>
   </ItemGroup>
