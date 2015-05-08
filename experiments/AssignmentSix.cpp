@@ -18,12 +18,20 @@ IMPLEMENT_GEOX_CLASS(AssignmentSix, 0)
 	ADD_SEPARATOR("Vectorfield")
 	ADD_STRING_PROP(VectorfieldFilename, 0)
 
+	ADD_SEPARATOR("Texture");
+	ADD_STRING_PROP(TextureFilename, 0)
+
 	ADD_SEPARATOR("Options")
 	ADD_INT32_PROP(SampleX, 0)
 	ADD_INT32_PROP(SampleY, 0)
 	ADD_INT32_PROP(KernelSize, 0)
 	ADD_INT32_PROP(Seed, 0)
 	ADD_NOARGS_METHOD(AssignmentSix::LoadVectorFieldAndRefresh)
+
+	ADD_NOARGS_METHOD(AssignmentSix::DrawTexture)
+	ADD_NOARGS_METHOD(AssignmentSix::LIC)
+
+
 }
 
 QWidget* AssignmentSix::createViewer()
@@ -37,14 +45,12 @@ AssignmentSix::AssignmentSix()
 	viewer = NULL;
 
 	//VectorfieldFilename = "C:\\Users\\Eyob\\Desktop\\Sink.am";
-	VectorfieldFilename = "./vis15-group7/data/assignment05/ANoise2CT4.am";
+	VectorfieldFilename = "/home/simon/Git/vis15-group7/data/assignment05/ANoise2CT4.am";
+	TextureFilename = "/home/simon/Git/vis15-group7/data/assignment06/";
 
 	RKStepSize = 0.3;
 	RKStep = 30;
 
-	DirectionFieldOnly = false;
-	IntegrateBackwards = false;
-	
 	VectorFieldAccessor = &AssignmentSix::FieldValue;
 
 	arcLength = 0.0f;
@@ -69,6 +75,55 @@ void AssignmentSix::LoadVectorFieldAndRefresh() {
 	LoadVectorField();
 
 	viewer->refresh();
+}
+
+void AssignmentSix::DrawTexture() {
+	viewer->clear();
+
+	srand((unsigned) Seed);
+
+	ScalarField2 field = getRandomField(makeVector2f(-5, -5), makeVector2f(5, 5), makeVector2ui(512, 512), false);
+	viewer->setTextureGray(field.getData());
+
+	viewer->refresh();
+}
+
+void AssignmentSix::LIC() {
+	viewer->clear();
+
+	srand((unsigned) Seed);
+	LoadVectorField();
+
+	vector< vector<Vector2f> > streamLines = getStreamLines(Field);
+	ScalarField2 randomField = getRandomField(makeVector2f(-5, -5), makeVector2f(5, 5), makeVector2ui(128, 128), false);
+
+	viewer->setTextureGray(Field.getData());
+
+	viewer->refresh();
+}
+
+ScalarField2 AssignmentSix::getRandomField(const Vector2f &lowerBounds, const Vector2f &upperBounds,
+										   const Vector2ui &dims, bool grayscale) {
+	ScalarField2 field = ScalarField2();
+	field.init(lowerBounds, upperBounds, dims);
+
+	for (card32 i = 0; i < dims[0]; ++i) {
+		for (card32 j = 0; j < dims[1]; ++j) {
+			float32 value = randomFloat(0, 1);
+			if (grayscale) {
+				value = round(value);
+			}
+
+			field.setNodeScalar(i, j, value);
+		}
+	}
+
+	return field;
+}
+
+
+vector<vector<Vector2f> > AssignmentSix::getStreamLines(const VectorField2 &field) {
+
 }
 
 bool AssignmentSix::IsTooSlow(Vector2f vec) {
@@ -124,37 +179,29 @@ float32 xstart, float32 ystart
 	return path;
 }
 
-Vector2f AssignmentSix::FieldValue(Vector2f xi) {
+Vector2f AssignmentSix::FieldValue(Vector2f xi, bool integrateBackwards) {
 	StaticVector<float, 2U> vec = Field.sample(xi[0], xi[1]);
 	Vector2f v = makeVector2f(vec[0], vec[1]);
-	return IntegrateBackwards ? -v : v;
+
+	return integrateBackwards ? -v : v;
 }
 
-Vector2f AssignmentSix::RK4(Vector2f xi)
+Vector2f AssignmentSix::RK4(Vector2f xi, bool integrateBackwards)
 {
 	Vector2f v1, v2, v3, v4;
-	v1 = (this->*VectorFieldAccessor)(xi);
-	if (DirectionFieldOnly) v1.normalize();
-
-	v2 = (this->*VectorFieldAccessor)(xi + (v1 * (RKStepSize / 2.0f)));
-	if (DirectionFieldOnly) v2.normalize();
-
-	v3 = (this->*VectorFieldAccessor)(xi + (v2 * (RKStepSize / 2.0f)));
-	if (DirectionFieldOnly) v3.normalize();
-
-	v4 = (this->*VectorFieldAccessor)(xi + (v3 * RKStepSize));
-	if (DirectionFieldOnly) v4.normalize();
+	v1 = (this->*VectorFieldAccessor)(xi, integrateBackwards);
+	v2 = (this->*VectorFieldAccessor)(xi + (v1 * (RKStepSize / 2.0f)), integrateBackwards);
+	v3 = (this->*VectorFieldAccessor)(xi + (v2 * (RKStepSize / 2.0f)), integrateBackwards);
+	v4 = (this->*VectorFieldAccessor)(xi + (v3 * RKStepSize), integrateBackwards);
 
 	return xi + (v1 + v2 * 2.0f + v3 * 2.0f + v4) * RKStepSize / 6.0f;
 }
 
 
-void AssignmentSix::RungeKuttaStreamline()
+void AssignmentSix::RungeKuttaStreamline(float32 xstart, float32 ystart)
 {
 	Vector4f color = makeVector4f(1, 0, 1, 1);
-	float xstart, ystart;
-	vector<Vector2f> path = Integrator(RKStep, &AssignmentSix::RK4, xstart, ystart);
-	/*DrawStreamline(path, color);*/
+	vector<Vector2f> path = Integrator(32, AssignmentSix::RK4, xstart, ystart);
 }
 
 float32 AssignmentSix::randomFloat(float32 a, float32 b) {

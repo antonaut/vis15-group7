@@ -19,13 +19,18 @@ private:
 	//Methods
 	void LoadVectorField();
 	bool IsTooSlow(Vector2f);
-	Vector2f RK4(Vector2f);
+	Vector2f RK4(Vector2f, bool integrateBackwards);
 
 	float32 randomFloat(float32, float32);
+
+	ScalarField2 getRandomField(const Vector2f &lowerBounds, const Vector2f &upperBounds,
+								const Vector2ui &dims, bool grayscale);
+
+	vector< vector<Vector2f> > getStreamLines(const VectorField2 &field);
 	//Attrs
 
 	///The method used to get vector field data.
-	Vector2f(AssignmentSix::*VectorFieldAccessor)(Vector2f);
+	Vector2f(AssignmentSix::*VectorFieldAccessor)(Vector2f, bool);
 
 	float arcLength;
 
@@ -37,10 +42,11 @@ public:
 	//Methods
 public:
 	void LoadVectorFieldAndRefresh();
-	void EulerStreamline();
-	void RungeKuttaStreamline();
+	void RungeKuttaStreamline(float32 xstart, float32 ystart);
+	void DrawTexture();
+	void LIC();
 
-	Vector2f FieldValue(Vector2f);
+	Vector2f FieldValue(Vector2f, bool integrateBackwards);
 	Vector2f Method(Vector2f);
 	vector<Vector2f> Integrator(int, Vector2f(AssignmentSix::*)(Vector2f), float32 x, float32 y);
 	virtual QWidget* createViewer();
@@ -52,9 +58,7 @@ public:
 
 	///File name of the vector field
 	string VectorfieldFilename;
-
-	bool IntegrateBackwards;
-	bool DirectionFieldOnly;
+	string TextureFilename;
 
 	//RK
 	float RKStepSize;
