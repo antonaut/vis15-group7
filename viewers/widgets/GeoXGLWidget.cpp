@@ -330,12 +330,12 @@ bool GeoXGLWidget::setTextureGray(const GridData& argTexture)
         return false;
     }
 
-    if (!IS_POW_2(argTexture.dims[0]) || !IS_POW_2(argTexture.dims[1]))
+    /* if (!IS_POW_2(argTexture.dims[0]) || !IS_POW_2(argTexture.dims[1]))
     {
         output << "setTextureGray failed, because the given dimensions are not a power of two.\n";
         output << "Use a scalar field size of 256x256, 512x512, 256x512, 128x512, or similar.\n";
         return false;
-    }
+    } */
 
 	TexParams.Clear();
 	TexParams.Dims[0] = argTexture.dims[0];

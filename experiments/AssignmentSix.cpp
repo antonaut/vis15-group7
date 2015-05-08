@@ -10,6 +10,9 @@
 #include <limits>
 #include <vector>
 
+#ifndef IS_POW_2
+#define IS_POW_2(x) (((x) != 0) && (((x) & ((x) - 1)) == 0))
+#endif
 
 IMPLEMENT_GEOX_CLASS(AssignmentSix, 0)
 {
@@ -50,6 +53,9 @@ AssignmentSix::AssignmentSix()
 	VectorfieldFilename = "/home/simon/Git/vis15-group7/data/assignment05/ANoise2CT4.am";
 	TextureFilename = "/home/simon/Git/vis15-group7/data/assignment06/";
 
+	SampleX = 4;
+	SampleY = 4;
+
 	RKStepSize = 0.3;
 	RKStep = 30;
 
@@ -62,6 +68,25 @@ AssignmentSix::AssignmentSix()
 
 AssignmentSix::~AssignmentSix() {}
 
+void AssignmentSix::resampleField() {
+	const auto &dims = Field.dims();
+	if (SampleX >= dims[0] && SampleY >= dims[1]) {
+		return;
+	}
+
+	const card32 minx = min((card32) SampleX, dims[0]);
+	const card32 miny = min((card32) SampleY, dims[1]);
+	VectorField2 resampledField = VectorField2();
+	resampledField.init(Field.boundMin(), Field.boundMax(), makeVector2ui(minx, miny));
+
+	for (card32 x = 0; x < minx; ++x) {
+		for(card32 y = 0; y < miny; ++y) {
+			resampledField.setNode(x, y, Field.node(x, y));
+		}
+	}
+
+	Field = resampledField;
+}
 
 void AssignmentSix::LoadVectorField() {
 
@@ -69,6 +94,9 @@ void AssignmentSix::LoadVectorField() {
 	{
 		error("Error loading field file " + VectorfieldFilename + "\n");
 	}
+
+	resampleField();
+
 	VectorFieldAccessor = &AssignmentSix::FieldValue;
 }
 
@@ -108,6 +136,8 @@ void AssignmentSix::LIC() {
 	const Vector2ui &dims = Field.dims();
 	const Vector2f &boundMin = Field.boundMin();
 	const Vector2f &boundMax = Field.boundMax();
+
+	output << dims[0] << ", " << dims[1] << "\n";
 
 	ScalarField2 randomField = getRandomField(boundMin, boundMax, dims, false);
 	ScalarField2 smearedField(randomField);
