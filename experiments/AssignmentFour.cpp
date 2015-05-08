@@ -68,7 +68,7 @@ AssignmentFour::AssignmentFour()
     viewer = NULL;
    
 	//VectorfieldFilename = "C:\\Users\\Eyob\\Desktop\\Sink.am";
-	VectorfieldFilename = "./vis15-group7/data/assignment05/ANoise2CT4.am";
+	VectorfieldFilename = "./data/assignment05/ANoise2CT4.am";
 	XStart = 1;
 	YStart = 0;
 	MaxDistance = 5.3;
@@ -395,12 +395,10 @@ void AssignmentFour::DrawStreamline(vector<Vector2f> path, const Vector4f &color
 			viewer->addPoint(p1);
 		}
 		p1 = p2;
-		viewer->refresh();
 	}
 	if (ShowPoints) {
 		viewer->addPoint(path[arraySize - 1]);
 	}
-	viewer->refresh();
 }
 
 void AssignmentFour::DrawVectorField()
