@@ -102,10 +102,28 @@ void AssignmentSix::LIC() {
 	srand((unsigned) Seed);
 	LoadVectorField();
 
-	vector< vector<Vector2f> > streamLines = getStreamLines(Field);
-	ScalarField2 randomField = getRandomField(makeVector2f(-5, -5), makeVector2f(5, 5), makeVector2ui(128, 128), false);
+	const Vector2ui &dims = Field.dims();
+	const Vector2f &boundMin = Field.boundMin();
+	const Vector2f &boundMax = Field.boundMax();
 
-	viewer->setTextureGray(Field.getData());
+	ScalarField2 randomField = getRandomField(boundMin, boundMax, dims, false);
+	ScalarField2 smearedField(randomField);
+	smearedField.setZero();
+
+	const float32 dx = (boundMax[0] - boundMin[0]) / dims[0];
+	const float32 dy = (boundMax[1] - boundMin[1]) / dims[1];
+	for (card32 i = 0; i < dims[0]; ++i) {
+		for (card32 j = 0; j < dims[0]; ++j) {
+			float32 xstart = boundMin[0] + dx*i;
+			float32 ystart = boundMin[1] + dy*i;
+			vector<Vector2f> streamLine = Integrator(32, &AssignmentSix::RK4, xstart, ystart);
+			vector<Vector2ui> pixels = streamLineToPixels(Field, streamLine);
+			float32 smearValue = smear(randomField, pixels);
+			smearedField.setNodeScalar(i, j, smearValue);
+		}
+	}
+
+	viewer->setTextureGray(smearedField.getData());
 
 	viewer->refresh();
 }
@@ -129,6 +147,30 @@ ScalarField2 AssignmentSix::getRandomField(const Vector2f &lowerBounds, const Ve
 	return field;
 }
 
+
+vector<Vector2ui> AssignmentSix::streamLineToPixels(const VectorField2 &field, const vector<Vector2f> &streamLine) {
+	vector<Vector2ui> pixels;
+
+	const Vector2ui &dims = Field.dims();
+	const Vector2f &boundMin = Field.boundMin();
+	const Vector2f &boundMax = Field.boundMax();
+	const float32 dx = (boundMax[0] - boundMin[0]) / dims[0];
+	const float32 dy = (boundMax[1] - boundMin[1]) / dims[1];
+
+	for (const auto &v : streamLine) {
+		card32 x = (card32) round((v[0] - boundMin[0]) / dx);
+		card32 y = (card32) round((v[1] - boundMin[1]) / dy);
+		pixels.push_back(makeVector2ui(x, y));
+	}
+
+	return pixels;
+}
+
+
+float32 AssignmentSix::smear(const ScalarField2 &field, const vector<Vector2ui> &pixels) {
+	// TODO
+	return 0;
+}
 
 vector<vector<Vector2f> > AssignmentSix::getStreamLines(const VectorField2 &field) {
 	vector< vector<Vector2f> > streamLines;
