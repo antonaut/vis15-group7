@@ -123,7 +123,11 @@ ScalarField2 AssignmentSix::getRandomField(const Vector2f &lowerBounds, const Ve
 
 
 vector<vector<Vector2f> > AssignmentSix::getStreamLines(const VectorField2 &field) {
+	vector< vector<Vector2f> > streamLines;
 
+	streamLines.push_back(Integrator(32, &AssignmentSix::RK4, 1, 1));
+
+	return streamLines;
 }
 
 bool AssignmentSix::IsTooSlow(Vector2f vec) {
@@ -177,7 +181,7 @@ AssignmentSix::Integrator(
 	}
 
 	path.push_back(xi);
-	copy(bw.rbegin(), bw.rend(), back_inserter(path));
+	std::copy(bw.rbegin(), bw.rend(), back_inserter(path));
 
 	xi[0] = xstart;
 	xi[1] = ystart;
@@ -234,7 +238,7 @@ Vector2f AssignmentSix::RK4(Vector2f xi, bool integrateBackwards)
 void AssignmentSix::RungeKuttaStreamline(float32 xstart, float32 ystart)
 {
 	Vector4f color = makeVector4f(1, 0, 1, 1);
-	vector<Vector2f> path = Integrator(32, AssignmentSix::RK4, xstart, ystart);
+	vector<Vector2f> path = Integrator(32, &AssignmentSix::RK4, xstart, ystart);
 }
 
 float32 AssignmentSix::randomFloat(float32 a, float32 b) {
