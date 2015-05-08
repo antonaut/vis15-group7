@@ -26,6 +26,7 @@ IMPLEMENT_GEOX_CLASS(AssignmentSix, 0)
 	ADD_INT32_PROP(SampleY, 0)
 	ADD_INT32_PROP(KernelSize, 0)
 	ADD_INT32_PROP(Seed, 0)
+	ADD_BOOLEAN_PROP(ColoredTexture, false)
 	ADD_NOARGS_METHOD(AssignmentSix::LoadVectorFieldAndRefresh)
 
 	ADD_NOARGS_METHOD(AssignmentSix::DrawTexture)
@@ -55,6 +56,8 @@ AssignmentSix::AssignmentSix()
 	VectorFieldAccessor = &AssignmentSix::FieldValue;
 
 	arcLength = 0.0f;
+
+	ColoredTexture = false;
 }
 
 AssignmentSix::~AssignmentSix() {}
@@ -169,7 +172,21 @@ vector<Vector2ui> AssignmentSix::streamLineToPixels(const VectorField2 &field, c
 
 float32 AssignmentSix::smear(const ScalarField2 &field, const vector<Vector2ui> &pixels) {
 	// TODO
-	return 0;
+	//for(size_t j=0; j<field.dims()[1]; j++)
+	//{
+		//for(size_t i=0; i<field.dims()[0]; i++)
+		//{
+			float32 sumVal = 0.0f;
+
+			for(int k=0; k<pixels.size(); k++)
+			{
+			  sumVal += field.nodeScalar(pixels[k][0], pixels[k][1]);	
+			}
+
+			sumVal = sumVal/pixels.size();
+		//}
+	//}
+	return sumVal;
 }
 
 vector<vector<Vector2f> > AssignmentSix::getStreamLines(const VectorField2 &field) {

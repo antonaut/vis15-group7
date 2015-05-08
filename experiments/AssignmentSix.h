@@ -48,6 +48,7 @@ public:
 	void DrawTexture();
 	void EnhanceTexture();
 	void LIC();
+	void Coloring();
 
 	Vector2f FieldValue(Vector2f, bool integrateBackwards);
 	vector<Vector2f> Integrator(int, Vector2f(AssignmentSix::*)(Vector2f, bool), float32 x, float32 y);
@@ -70,6 +71,9 @@ public:
 	int32 SampleY;
 	int32 KernelSize;
 	int32 Seed;
+
+	///Whether to draw the texture in RGB or grayscale
+	bool ColoredTexture;
 
 protected:
 	GLGeometryViewer* viewer;
