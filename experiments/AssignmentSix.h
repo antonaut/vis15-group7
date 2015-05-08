@@ -27,6 +27,8 @@ private:
 								const Vector2ui &dims, bool grayscale);
 
 	vector< vector<Vector2f> > getStreamLines(const VectorField2 &field);
+	vector<Vector2ui> streamLineToPixels(const VectorField2 &field, const vector<Vector2f> &streamLine);
+	float32 smear(const ScalarField2 &field, const vector<Vector2ui> &pixels);
 	//Attrs
 
 	///The method used to get vector field data.
