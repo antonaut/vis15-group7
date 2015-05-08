@@ -29,6 +29,7 @@ IMPLEMENT_GEOX_CLASS(AssignmentSix, 0)
 	ADD_NOARGS_METHOD(AssignmentSix::LoadVectorFieldAndRefresh)
 
 	ADD_NOARGS_METHOD(AssignmentSix::DrawTexture)
+	ADD_NOARGS_METHOD(AssignmentSix::EnhanceTexture)
 	ADD_NOARGS_METHOD(AssignmentSix::LIC)
 
 
@@ -82,9 +83,16 @@ void AssignmentSix::DrawTexture() {
 
 	srand((unsigned) Seed);
 
-	ScalarField2 field = getRandomField(makeVector2f(-5, -5), makeVector2f(5, 5), makeVector2ui(512, 512), false);
-	viewer->setTextureGray(field.getData());
+	texture = getRandomField(makeVector2f(-5, -5), makeVector2f(5, 5), makeVector2ui(512, 512), false);
+	viewer->setTextureGray(texture.getData());
 
+	viewer->refresh();
+}
+
+void AssignmentSix::EnhanceTexture() {
+	viewer->clear();
+	texture = enhanceContrast(texture);
+	viewer->setTextureGray(texture.getData());
 	viewer->refresh();
 }
 
@@ -128,6 +136,42 @@ vector<vector<Vector2f> > AssignmentSix::getStreamLines(const VectorField2 &fiel
 	streamLines.push_back(Integrator(32, &AssignmentSix::RK4, 1, 1));
 
 	return streamLines;
+}
+
+ScalarField2 AssignmentSix::enhanceContrast(ScalarField2 image) {
+
+	Vector2ui dims = makeVector2ui(image.dims()[0], image.dims()[1]);
+	float32 sum = 0.0f;
+	float32 P = 0.0f;
+	int nonBlack = 0;
+
+	for (card32 i = 0; i < dims[0]; ++i){
+		for (card32 j = 0; j < dims[1]; ++j) {
+			float32 val = image.nodeScalar(i, j);
+			if (val != 0.0f) {
+				nonBlack++;
+				sum += val;
+				P += pow(val, 2);
+			}
+		}
+	}
+	float32 mean = sum / (dims[0] * dims[1]);
+	float32 dev = sqrt((P-nonBlack*pow(mean, 2))/(nonBlack-1));
+	float32 f = 0.1 / dev;
+	const float32 MAX_STRETCH_FACTOR = 20;
+	f = f > MAX_STRETCH_FACTOR ? f : MAX_STRETCH_FACTOR;
+	
+	ScalarField2 enhanced = ScalarField2();
+	enhanced.init(makeVector2f(image.boundMin()[0], image.boundMin()[1]), makeVector2f(image.boundMax()[0], image.boundMax()[1]), dims);
+
+	for (card32 i = 0; i < dims[0]; ++i) {
+		for (card32 j = 0; j < dims[1]; ++j) {
+			float32 val = image.nodeScalar(i, j);
+			enhanced.setNodeScalar(i, j, 0.5 + f*(val - mean));
+		}
+	}
+
+	return enhanced;
 }
 
 bool AssignmentSix::IsTooSlow(Vector2f vec) {

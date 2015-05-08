@@ -20,7 +20,7 @@ private:
 	void LoadVectorField();
 	bool IsTooSlow(Vector2f);
 	Vector2f RK4(Vector2f, bool integrateBackwards);
-
+	ScalarField2 enhanceContrast(ScalarField2);
 	float32 randomFloat(float32, float32);
 
 	ScalarField2 getRandomField(const Vector2f &lowerBounds, const Vector2f &upperBounds,
@@ -28,7 +28,7 @@ private:
 
 	vector< vector<Vector2f> > getStreamLines(const VectorField2 &field);
 	//Attrs
-
+	ScalarField2 texture;
 	///The method used to get vector field data.
 	Vector2f(AssignmentSix::*VectorFieldAccessor)(Vector2f, bool);
 
@@ -44,6 +44,7 @@ public:
 	void LoadVectorFieldAndRefresh();
 	void RungeKuttaStreamline(float32 xstart, float32 ystart);
 	void DrawTexture();
+	void EnhanceTexture();
 	void LIC();
 
 	Vector2f FieldValue(Vector2f, bool integrateBackwards);
