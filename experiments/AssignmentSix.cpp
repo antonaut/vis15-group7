@@ -137,9 +137,9 @@ Returns a vector with a stream line path.
 */
 vector<Vector2f>
 AssignmentSix::Integrator(
-int numberOfSteps,
-Vector2f(AssignmentSix::*Method)(Vector2f),
-float32 xstart, float32 ystart
+		int numberOfSteps,
+		Vector2f(AssignmentSix::*Method)(Vector2f, bool),
+		float32 xstart, float32 ystart
 )
 {
 	Vector2f xi;
@@ -149,11 +149,11 @@ float32 xstart, float32 ystart
 	xi[0] = xstart;
 	xi[1] = ystart;
 
-	path.push_back(xi);
+	vector<Vector2f> bw;
 
 	for (int i = 0; i < numberOfSteps; i++)
 	{
-		Vector2f xp = (this->*Method)(xi);
+		Vector2f xp = (this->*Method)(xi, true);
 		if (IsTooSlow(xp)) {
 			output << "Stopped early after " << i << " steps. (Going too slow)\n";
 			return path;
@@ -175,6 +175,39 @@ float32 xstart, float32 ystart
 
 		xi = xp;
 	}
+
+	path.push_back(xi);
+	copy(bw.rbegin(), bw.rend(), back_inserter(path));
+
+	xi[0] = xstart;
+	xi[1] = ystart;
+
+	for (int i = 0; i < numberOfSteps; i++)
+	{
+		Vector2f xp = (this->*Method)(xi, false);
+		if (IsTooSlow(xp)) {
+			output << "Stopped early after " << i << " steps. (Going too slow)\n";
+			return path;
+		}
+
+		if (!Field.insideBounds(xp)) {
+			output << "Stopped early after " << i << " steps. (Outside bounds)\n";
+			return path;
+		}
+
+		path.push_back(xp);
+		arcLength += (xp - xi).getSqrNorm();
+
+		/*
+		if (arcLength > MaxDistance) {
+			output << "Stopped early after " << i << " steps. (Maximum distance)\n";
+			return path;
+		}*/
+
+		xi = xp;
+	}
+
+	path.push_back(xi);
 
 	return path;
 }

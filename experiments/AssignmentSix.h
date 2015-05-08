@@ -47,8 +47,7 @@ public:
 	void LIC();
 
 	Vector2f FieldValue(Vector2f, bool integrateBackwards);
-	Vector2f Method(Vector2f);
-	vector<Vector2f> Integrator(int, Vector2f(AssignmentSix::*)(Vector2f), float32 x, float32 y);
+	vector<Vector2f> Integrator(int, Vector2f(AssignmentSix::*)(Vector2f, bool), float32 x, float32 y);
 	virtual QWidget* createViewer();
 
 	//Attributes
