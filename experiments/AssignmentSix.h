@@ -58,7 +58,7 @@ public:
 	void LoadVectorFieldAndRefresh();
 	void DrawTexture();
 	void EnhanceTexture();
-	void LIC();
+	void FastLIC();
 	void Coloring();
 
 	virtual QWidget* createViewer();

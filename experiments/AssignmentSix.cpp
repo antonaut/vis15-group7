@@ -36,7 +36,7 @@ IMPLEMENT_GEOX_CLASS(AssignmentSix, 0)
 
 	ADD_NOARGS_METHOD(AssignmentSix::DrawTexture)
 	ADD_NOARGS_METHOD(AssignmentSix::EnhanceTexture)
-	ADD_NOARGS_METHOD(AssignmentSix::LIC)
+	ADD_NOARGS_METHOD(AssignmentSix::FastLIC)
 
 
 }
@@ -114,7 +114,7 @@ void AssignmentSix::EnhanceTexture() {
 	viewer->refresh();
 }
 
-void AssignmentSix::LIC() {
+void AssignmentSix::FastLIC() {
 	viewer->clear();
 
 	srand((unsigned) Seed);
