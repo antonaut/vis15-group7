@@ -74,8 +74,7 @@ public:
 	string TextureFilename;
 
 	// The number sample points of the texture in both directions
-	card32 TextureResolutionX;
-	card32 TextureResolutionY;
+	Vector2ui TextureResolution;
 
 	//RK
 	float RKStepSize;
@@ -89,6 +88,9 @@ public:
 	///Whether to draw the texture in RGB or grayscale
 	bool GrayScale;
 	bool ColoredTexture;
+
+	// Add StreamLines, for debugging
+	bool AddStreamLines;
 
 protected:
 	GLGeometryViewer* viewer;

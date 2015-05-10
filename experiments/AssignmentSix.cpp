@@ -24,9 +24,9 @@ IMPLEMENT_GEOX_CLASS(AssignmentSix, 0)
 
 	ADD_SEPARATOR("Texture");
 	ADD_STRING_PROP(TextureFilename, 0)
-	ADD_CARD32_PROP(TextureResolutionX, 0);
-	ADD_CARD32_PROP(TextureResolutionY, 0);
+	ADD_VECTOR2I_PROP(TextureResolution, 0);
 	ADD_BOOLEAN_PROP(GrayScale, 0);
+	ADD_BOOLEAN_PROP(AddStreamLines, 0);
 
 	ADD_SEPARATOR("Options")
 	ADD_INT32_PROP(SampleX, 0)
@@ -56,9 +56,9 @@ AssignmentSix::AssignmentSix()
 	//VectorfieldFilename = "C:\\Users\\Eyob\\Desktop\\Sink.am";
 	VectorfieldFilename = "/home/simon/Git/vis15-group7/data/assignment06/ANoise2CT4.am";
 	TextureFilename = "/home/simon/Git/vis15-group7/data/assignment06/";
-	TextureResolutionX = 64;
-	TextureResolutionY = 64;
+	TextureResolution = makeVector2ui(64, 64);
 	GrayScale = false;
+	AddStreamLines = false;
 
 	SampleX = 32;
 	SampleY = 32;
@@ -75,6 +75,8 @@ AssignmentSix::AssignmentSix()
 	Seed = 1;
 
 	ColoredTexture = false;
+
+	texture = getRandomField(makeVector2f(-5, -5), makeVector2f(5, 5), TextureResolution, GrayScale);
 }
 
 AssignmentSix::~AssignmentSix() {}
@@ -127,7 +129,7 @@ void AssignmentSix::DrawTexture() {
 
 	srand((unsigned) Seed);
 
-	texture = getRandomField(Field.boundMin(), Field.boundMax(), makeVector2ui(TextureResolutionX, TextureResolutionY), GrayScale);
+	texture = getRandomField(Field.boundMin(), Field.boundMax(), TextureResolution, GrayScale);
 	viewer->setTextureGray(texture.getData());
 
 	viewer->refresh();
@@ -146,7 +148,7 @@ void AssignmentSix::LIC() {
 	srand((unsigned) Seed);
 	LoadVectorField();
 
-	const Vector2ui textureResolution = makeVector2ui(TextureResolutionX, TextureResolutionY);
+	const Vector2ui &textureResolution = TextureResolution;
 
 	//VectorField2 vectorField = getEllipseField(makeVector2f(-5, -5), makeVector2f(5, 5), makeVector2ui(16, 16));
 	//Field = vectorField;
@@ -163,6 +165,8 @@ void AssignmentSix::LIC() {
 	vector< vector<card32> > timesRendered(textureResolution[0], vector<card32>(textureResolution[1], 0));
 	vector< vector<float32> > valueSum(textureResolution[0], vector<float32>(textureResolution[1], 0));
 
+	size_t numStreamLines = 0;
+
 	const float32 dx = (boundMax[0] - boundMin[0]) / textureResolution[0];
 	const float32 dy = (boundMax[1] - boundMin[1]) / textureResolution[1];
 	for (card32 x = 0; x < textureResolution[0]; ++x) {
@@ -175,7 +179,11 @@ void AssignmentSix::LIC() {
 			float32 ystart = boundMin[1] + dy * y + dy/2;
 			vector<Vector2f> streamLine = Integrator(128, &AssignmentSix::RK4, xstart, ystart);
 
-			drawStreamline(streamLine, makeVector4f(1, 0, 0, 1));
+			numStreamLines += 1;
+
+			if (AddStreamLines) {
+				drawStreamline(streamLine, makeVector4f(1, 0, 0, 1));
+			}
 
 			if (streamLine.empty()) {
 				timesRendered[x][y] += 1;
@@ -216,6 +224,8 @@ void AssignmentSix::LIC() {
 			smearedField.setNodeScalar(x, y, v);
 		}
 	}
+
+	output << "Number of streamLines: " << numStreamLines << "\n";
 
 	texture = smearedField;
 
