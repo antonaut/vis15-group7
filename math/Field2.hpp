@@ -65,6 +65,7 @@ public:
     if(!AMLoader::load(fname_, mGridData) ||
        mGridData.numDataComponents != NUMCOMPONENTS) {
       output << "The field could not be loaded.\n\t==> Does the file exist?\n\t==> Has it the right number of components?\n";
+      output << "Found components: " << mGridData.numDataComponents << ", Expected components: " << NUMCOMPONENTS << "\n";
       return false;
     }
 

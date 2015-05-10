@@ -67,6 +67,16 @@ bool AMLoader::load(const std::string &fname_, GridData &data_) {
   output << "AMLoader: " << "\tBoundingBox in y-Direction: [" << ymin << " ... " << ymax << "]\n";
   output << "AMLoader: " << "\tBoundingBox in z-Direction: [" << zmin << " ... " << zmax << "]\n";
 
+  if (xmin > xmax) {
+    std::swap(xmin, xmax);
+  }
+  if (ymin > ymax) {
+    std::swap(ymin, ymax);
+  }
+  if (zmin > zmax) {
+    std::swap(zmin, zmax);
+  }
+
   data_.boundMin[0]   = xmin; data_.boundMax[0] = xmax;
   data_.boundMin[1]   = ymin; data_.boundMax[1] = ymax;
   data_.boundMin[2]   = zmin; data_.boundMax[2] = zmax;
@@ -93,6 +103,14 @@ bool AMLoader::load(const std::string &fname_, GridData &data_) {
       || xmin > xmax || ymin > ymax || zmin > zmax
       || !bIsUniform || NumComponents <= 0) {
     output << "AMLoader: " << "Error: Something went wrong!\n";
+    output << "xDim <= 0: " << (xDim <= 0) << "\n";
+    output << "yDim <= 0:" << ( yDim <= 0) << "\n";
+    output << "zDim <= 0:" << ( zDim <= 0) << "\n";
+    output << "xmin > xmax:" << ( xmin > xmax) << "\n";
+    output << "ymin > ymax:" << ( ymin > ymax) << "\n";
+    output << "zmin > zmax:" << ( zmin > zmax) << "\n";
+    output << "!bIsUniform:" << ( !bIsUniform) << "\n";
+    output << "NumComponents <= 0:" << ( NumComponents <= 0) << "\n";
     fclose(fp);
     return false;
   }
