@@ -26,6 +26,7 @@ IMPLEMENT_GEOX_CLASS(AssignmentSix, 0)
 	ADD_STRING_PROP(TextureFilename, 0)
 	ADD_CARD32_PROP(TextureResolutionX, 0);
 	ADD_CARD32_PROP(TextureResolutionY, 0);
+	ADD_BOOLEAN_PROP(GrayScale, 0);
 
 	ADD_SEPARATOR("Options")
 	ADD_INT32_PROP(SampleX, 0)
@@ -57,6 +58,7 @@ AssignmentSix::AssignmentSix()
 	TextureFilename = "/home/simon/Git/vis15-group7/data/assignment06/";
 	TextureResolutionX = 64;
 	TextureResolutionY = 64;
+	GrayScale = false;
 
 	SampleX = 32;
 	SampleY = 32;
@@ -125,7 +127,7 @@ void AssignmentSix::DrawTexture() {
 
 	srand((unsigned) Seed);
 
-	texture = getRandomField(Field.boundMin(), Field.boundMax(), makeVector2ui(TextureResolutionX, TextureResolutionY), false);
+	texture = getRandomField(Field.boundMin(), Field.boundMax(), makeVector2ui(TextureResolutionX, TextureResolutionY), GrayScale);
 	viewer->setTextureGray(texture.getData());
 
 	viewer->refresh();
@@ -154,7 +156,7 @@ void AssignmentSix::LIC() {
 	const Vector2f &boundMin = vectorField.boundMin();
 	const Vector2f &boundMax = vectorField.boundMax();
 
-	ScalarField2 randomField = getRandomField(boundMin, boundMax, textureResolution, false);
+	ScalarField2 randomField = getRandomField(boundMin, boundMax, textureResolution, GrayScale);
 	ScalarField2 smearedField(randomField);
 	smearedField.setZero();
 
@@ -247,7 +249,7 @@ ScalarField2 AssignmentSix::getRandomField(const Vector2f &boundMin, const Vecto
 	for (card32 i = 0; i < dims[0]; ++i) {
 		for (card32 j = 0; j < dims[1]; ++j) {
 			float32 value = randomFloat(0, 1);
-			if (grayscale) {
+			if (!grayscale) {
 				value = round(value);
 			}
 

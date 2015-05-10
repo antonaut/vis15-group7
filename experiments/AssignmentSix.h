@@ -87,6 +87,7 @@ public:
 	int32 Seed;
 
 	///Whether to draw the texture in RGB or grayscale
+	bool GrayScale;
 	bool ColoredTexture;
 
 protected:
