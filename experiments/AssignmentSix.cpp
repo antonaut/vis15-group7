@@ -51,7 +51,7 @@ AssignmentSix::AssignmentSix()
 {
 	viewer = NULL;
 
-	VectorfieldFilename = "/home/simon/Git/vis15-group7/data/assignment06/ANoise2CT4.am";
+	VectorfieldFilename = "/home/simon/Git/vis15-group7/data/assignment06/Cylinderclose2CT10.am";
 	TextureFilename = "/home/simon/Git/vis15-group7/data/assignment06/";
 	TextureResolution = makeVector2ui(64, 64);
 	GrayScale = false;
@@ -148,6 +148,13 @@ void AssignmentSix::FastLIC() {
 
 			float32 xstart = boundMin[0] + dx * x + dx/2;
 			float32 ystart = boundMin[1] + dy * y + dy/2;
+
+			if (vectorField.sample(xstart, ystart).getSqrNorm() == 0) {
+				timesRendered[x][y] += 1;
+				valueSum[x][y] += 0;
+				continue;
+			}
+
 			vector<Vector2f> streamLine = Integrator(128, &AssignmentSix::RK4, xstart, ystart);
 
 			numStreamLines += 1;
@@ -158,7 +165,7 @@ void AssignmentSix::FastLIC() {
 
 			if (streamLine.empty()) {
 				timesRendered[x][y] += 1;
-				valueSum[x][y] += randomField.nodeScalar(x, y);
+				valueSum[x][y] += 0;
 				continue;
 			}
 
