@@ -16,26 +16,34 @@ class AssignmentSix : public Experiment
 	GEOX_CLASS(AssignmentSix)
 
 private:
-	//Methods
+	// Help methods
+	float32 randomFloat(float32, float32);
+	Vector2f rotate(const Vector2f &, float32 angle) const;
+
+	// Drawing help methods
+	void drawStreamline(vector<Vector2f> path, const Vector4f &color);
+
+	// VectorField creators
+	ScalarField2 getRandomField(const Vector2f &boundMin, const Vector2f &boundMax, const Vector2ui &dims, bool grayscale);
+	VectorField2 getEllipseField(const Vector2f &boundMin, const Vector2f &boundMax, const Vector2ui &dims) const;
 	void LoadVectorField();
+	void resampleField();
+
+	// StreamLine helpers
 	bool IsTooSlow(Vector2f);
 	Vector2f RK4(Vector2f, bool integrateBackwards);
 	ScalarField2 enhanceContrast(ScalarField2);
-	float32 randomFloat(float32, float32);
-	ScalarField2 getRandomField(const Vector2f &boundMin, const Vector2f &boundMax, const Vector2ui &dims, bool grayscale);
-	VectorField2 getEllipseField(const Vector2f &boundMin, const Vector2f &boundMax, const Vector2ui &dims) const;
-	void drawStreamline(vector<Vector2f> path, const Vector4f &color);
+	Vector2f FieldValue(Vector2f, bool integrateBackwards);
+	vector<Vector2f> Integrator(int, Vector2f(AssignmentSix::*)(Vector2f, bool), float32 x, float32 y);
 
-	Vector2f rotate(const Vector2f &, float32 angle) const;
-
-	vector< vector<Vector2f> > getStreamLines(const VectorField2 &field);
+	// Fast LIC helpers
 	vector<Vector2ui> streamLineToPixels(const ScalarField2 &field, const vector<Vector2f> &streamLine);
 	vector<Vector2ui> lineToPixels(const ScalarField2 &field, const Vector2f &v0, const Vector2f &v1) const;
-	Vector2ui toPixel(float32 x, float32 y, const ScalarField2 &field) const;
 	vector<float32> smear(const ScalarField2 &field, const vector<Vector2ui> &pixels);
-	void resampleField();
+
 	//Attrs
 	ScalarField2 texture;
+
 	///The method used to get vector field data.
 	Vector2f(AssignmentSix::*VectorFieldAccessor)(Vector2f, bool);
 
@@ -49,14 +57,11 @@ public:
 	//Methods
 public:
 	void LoadVectorFieldAndRefresh();
-	void RungeKuttaStreamline(float32 xstart, float32 ystart);
 	void DrawTexture();
 	void EnhanceTexture();
 	void LIC();
 	void Coloring();
 
-	Vector2f FieldValue(Vector2f, bool integrateBackwards);
-	vector<Vector2f> Integrator(int, Vector2f(AssignmentSix::*)(Vector2f, bool), float32 x, float32 y);
 	virtual QWidget* createViewer();
 
 	//Attributes
@@ -69,7 +74,9 @@ public:
 	string TextureFilename;
 
 	// The number sample points of the texture in both directions
-	card32 TextureResolution;
+	card32 TextureResolutionX;
+	card32 TextureResolutionY;
+
 	//RK
 	float RKStepSize;
 	int RKStep;

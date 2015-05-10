@@ -24,7 +24,8 @@ IMPLEMENT_GEOX_CLASS(AssignmentSix, 0)
 
 	ADD_SEPARATOR("Texture");
 	ADD_STRING_PROP(TextureFilename, 0)
-	ADD_CARD32_PROP(TextureResolution, 0);
+	ADD_CARD32_PROP(TextureResolutionX, 0);
+	ADD_CARD32_PROP(TextureResolutionY, 0);
 
 	ADD_SEPARATOR("Options")
 	ADD_INT32_PROP(SampleX, 0)
@@ -54,7 +55,8 @@ AssignmentSix::AssignmentSix()
 	//VectorfieldFilename = "C:\\Users\\Eyob\\Desktop\\Sink.am";
 	VectorfieldFilename = "/home/simon/Git/vis15-group7/data/assignment06/ANoise2CT4.am";
 	TextureFilename = "/home/simon/Git/vis15-group7/data/assignment06/";
-	TextureResolution = 64;
+	TextureResolutionX = 64;
+	TextureResolutionY = 64;
 
 	SampleX = 32;
 	SampleY = 32;
@@ -123,7 +125,7 @@ void AssignmentSix::DrawTexture() {
 
 	srand((unsigned) Seed);
 
-	texture = getRandomField(Field.boundMin(), Field.boundMax(), makeVector2ui(TextureResolution, TextureResolution), false);
+	texture = getRandomField(Field.boundMin(), Field.boundMax(), makeVector2ui(TextureResolutionX, TextureResolutionY), false);
 	viewer->setTextureGray(texture.getData());
 
 	viewer->refresh();
@@ -142,7 +144,7 @@ void AssignmentSix::LIC() {
 	srand((unsigned) Seed);
 	LoadVectorField();
 
-	const Vector2ui textureResolution = makeVector2ui(TextureResolution, TextureResolution);
+	const Vector2ui textureResolution = makeVector2ui(TextureResolutionX, TextureResolutionY);
 
 	//VectorField2 vectorField = getEllipseField(makeVector2f(-5, -5), makeVector2f(5, 5), makeVector2ui(16, 16));
 	//Field = vectorField;
@@ -212,6 +214,8 @@ void AssignmentSix::LIC() {
 			smearedField.setNodeScalar(x, y, v);
 		}
 	}
+
+	texture = smearedField;
 
 	viewer->setTextureGray(smearedField.getData());
 
@@ -501,13 +505,6 @@ Vector2f AssignmentSix::RK4(Vector2f xi, bool integrateBackwards)
 	v4 = (this->*VectorFieldAccessor)(xi + (v3 * RKStepSize), integrateBackwards);
 
 	return xi + (v1 + v2 * 2.0f + v3 * 2.0f + v4) * RKStepSize / 6.0f;
-}
-
-
-void AssignmentSix::RungeKuttaStreamline(float32 xstart, float32 ystart)
-{
-	Vector4f color = makeVector4f(1, 0, 1, 1);
-	vector<Vector2f> path = Integrator(32, &AssignmentSix::RK4, xstart, ystart);
 }
 
 float32 AssignmentSix::randomFloat(float32 a, float32 b) {
