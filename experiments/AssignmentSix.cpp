@@ -9,6 +9,7 @@
 
 #include <limits>
 #include <vector>
+#include <algorithm>
 
 #ifndef IS_POW_2
 #define IS_POW_2(x) (((x) != 0) && (((x) & ((x) - 1)) == 0))
@@ -23,11 +24,12 @@ IMPLEMENT_GEOX_CLASS(AssignmentSix, 0)
 
 	ADD_SEPARATOR("Texture");
 	ADD_STRING_PROP(TextureFilename, 0)
+	ADD_CARD32_PROP(TextureResolution, 0);
 
 	ADD_SEPARATOR("Options")
 	ADD_INT32_PROP(SampleX, 0)
 	ADD_INT32_PROP(SampleY, 0)
-	ADD_INT32_PROP(KernelSize, 0)
+	ADD_CARD32_PROP(KernelSize, 0)
 	ADD_INT32_PROP(Seed, 0)
 	ADD_BOOLEAN_PROP(ColoredTexture, false)
 	ADD_NOARGS_METHOD(AssignmentSix::LoadVectorFieldAndRefresh)
@@ -50,11 +52,12 @@ AssignmentSix::AssignmentSix()
 	viewer = NULL;
 
 	//VectorfieldFilename = "C:\\Users\\Eyob\\Desktop\\Sink.am";
-	VectorfieldFilename = "/home/simon/Git/vis15-group7/data/assignment05/ANoise2CT4.am";
+	VectorfieldFilename = "/home/simon/Git/vis15-group7/data/assignment06/ANoise2CT4.am";
 	TextureFilename = "/home/simon/Git/vis15-group7/data/assignment06/";
+	TextureResolution = 64;
 
-	SampleX = 4;
-	SampleY = 4;
+	SampleX = 32;
+	SampleY = 32;
 
 	RKStepSize = 0.3;
 	RKStep = 30;
@@ -62,6 +65,10 @@ AssignmentSix::AssignmentSix()
 	VectorFieldAccessor = &AssignmentSix::FieldValue;
 
 	arcLength = 0.0f;
+
+	KernelSize = 32;
+
+	Seed = 1;
 
 	ColoredTexture = false;
 }
@@ -95,7 +102,7 @@ void AssignmentSix::LoadVectorField() {
 		error("Error loading field file " + VectorfieldFilename + "\n");
 	}
 
-	resampleField();
+	// resampleField();
 
 	VectorFieldAccessor = &AssignmentSix::FieldValue;
 }
@@ -114,7 +121,7 @@ void AssignmentSix::DrawTexture() {
 
 	srand((unsigned) Seed);
 
-	texture = getRandomField(makeVector2f(-5, -5), makeVector2f(5, 5), makeVector2ui(512, 512), false);
+	texture = getRandomField(makeVector2f(-5, -5), makeVector2f(5, 5), makeVector2ui(TextureResolution, TextureResolution), false);
 	viewer->setTextureGray(texture.getData());
 
 	viewer->refresh();
@@ -131,28 +138,77 @@ void AssignmentSix::LIC() {
 	viewer->clear();
 
 	srand((unsigned) Seed);
-	LoadVectorField();
+	//LoadVectorField();
 
-	const Vector2ui &dims = Field.dims();
-	const Vector2f &boundMin = Field.boundMin();
-	const Vector2f &boundMax = Field.boundMax();
+	const Vector2ui textureResolution = makeVector2ui(TextureResolution, TextureResolution);
 
-	output << dims[0] << ", " << dims[1] << "\n";
+	VectorField2 vectorField = getEllipseField(makeVector2f(-5, -5), makeVector2f(5, 5), makeVector2ui(16, 16));
+	Field = vectorField;
 
-	ScalarField2 randomField = getRandomField(boundMin, boundMax, dims, false);
+	const Vector2ui &dims = vectorField.dims();
+	const Vector2f &boundMin = vectorField.boundMin();
+	const Vector2f &boundMax = vectorField.boundMax();
+
+	ScalarField2 randomField = getRandomField(boundMin, boundMax, textureResolution, false);
 	ScalarField2 smearedField(randomField);
 	smearedField.setZero();
 
-	const float32 dx = (boundMax[0] - boundMin[0]) / dims[0];
-	const float32 dy = (boundMax[1] - boundMin[1]) / dims[1];
-	for (card32 i = 0; i < dims[0]; ++i) {
-		for (card32 j = 0; j < dims[0]; ++j) {
-			float32 xstart = boundMin[0] + dx*i;
-			float32 ystart = boundMin[1] + dy*i;
-			vector<Vector2f> streamLine = Integrator(32, &AssignmentSix::RK4, xstart, ystart);
-			vector<Vector2ui> pixels = streamLineToPixels(Field, streamLine);
-			float32 smearValue = smear(randomField, pixels);
-			smearedField.setNodeScalar(i, j, smearValue);
+	vector< vector<card32> > timesRendered(textureResolution[0], vector<card32>(textureResolution[1], 0));
+	vector< vector<float32> > valueSum(textureResolution[0], vector<float32>(textureResolution[1], 0));
+
+	const float32 dx = (boundMax[0] - boundMin[0]) / textureResolution[0];
+	const float32 dy = (boundMax[1] - boundMin[1]) / textureResolution[1];
+	for (card32 x = 0; x < textureResolution[0]; ++x) {
+		for (card32 y = 0; y < textureResolution[1]; ++y) {
+			if (timesRendered[x][y] > 0) {
+				continue;
+			}
+
+			float32 xstart = boundMin[0] + dx * x + dx/2;
+			float32 ystart = boundMin[1] + dy * y + dy/2;
+			vector<Vector2f> streamLine = Integrator(128, &AssignmentSix::RK4, xstart, ystart);
+
+			drawStreamline(streamLine, makeVector4f(1, 0, 0, 1));
+
+			if (streamLine.empty()) {
+				timesRendered[x][y] += 1;
+				valueSum[x][y] += randomField.nodeScalar(x, y);
+				continue;
+			}
+
+			vector<Vector2ui> pixels = streamLineToPixels(randomField, streamLine);
+			const bool containsStartPixel = std::find(pixels.begin(), pixels.end(), makeVector2ui(x, y)) != pixels.end();
+			if (!containsStartPixel) {
+				pixels[pixels.size()/2] = makeVector2ui(x, y);
+			}
+
+			assert(!pixels.empty());
+
+			vector<float32> smearValues = smear(randomField, pixels);
+
+			assert(smearValues.size() == pixels.size());
+
+			for (size_t i = 0; i < smearValues.size(); ++i) {
+				const Vector2ui &p = pixels[i];
+				card32 px = p[0];
+				card32 py = p[1];
+
+				assert(px >= 0 && py >= 0 && px < textureResolution[0] && py < textureResolution[1]);
+
+				timesRendered[p[0]][p[1]] += 1;
+				valueSum[p[0]][p[1]] += smearValues[i];
+			}
+		}
+	}
+
+	for (card32 x = 0; x < textureResolution[0]; ++x) {
+		for (card32 y = 0; y < textureResolution[1]; ++y) {
+			float32 v = valueSum[x][y] / timesRendered[x][y];
+			if (isnan(v)) {
+				v = randomField.nodeScalar(x, y);
+				output << "nan (" << x << ", " << y << "): vs=" << valueSum[x][y] << ", " << "tr=" << timesRendered[x][y] << "\n";
+			}
+			smearedField.setNodeScalar(x, y, v);
 		}
 	}
 
@@ -161,10 +217,27 @@ void AssignmentSix::LIC() {
 	viewer->refresh();
 }
 
-ScalarField2 AssignmentSix::getRandomField(const Vector2f &lowerBounds, const Vector2f &upperBounds,
+void AssignmentSix::drawStreamline(vector<Vector2f> path, const Vector4f &color)
+{
+	size_t arraySize = path.size();
+	if (arraySize < 2) {
+		return;
+	}
+	Vector2f p1 = path[0];
+	Vector2f p2;
+	for(size_t i = 1; i < arraySize; ++i) {
+		p2 = path[i];
+		viewer->addLine(p1[0], p1[1], p2[0], p2[1], color);
+		viewer->addPoint(p1);
+		p1 = p2;
+	}
+	viewer->addPoint(path[arraySize - 1]);
+}
+
+ScalarField2 AssignmentSix::getRandomField(const Vector2f &boundMin, const Vector2f &boundMax,
 										   const Vector2ui &dims, bool grayscale) {
 	ScalarField2 field = ScalarField2();
-	field.init(lowerBounds, upperBounds, dims);
+	field.init(boundMin, boundMax, dims);
 
 	for (card32 i = 0; i < dims[0]; ++i) {
 		for (card32 j = 0; j < dims[1]; ++j) {
@@ -180,43 +253,104 @@ ScalarField2 AssignmentSix::getRandomField(const Vector2f &lowerBounds, const Ve
 	return field;
 }
 
+VectorField2 AssignmentSix::getEllipseField(const Vector2f &boundMin, const Vector2f &boundMax, const Vector2ui &dims) const {
+	VectorField2 field = VectorField2();
+	field.init(boundMin, boundMax, dims);
 
-vector<Vector2ui> AssignmentSix::streamLineToPixels(const VectorField2 &field, const vector<Vector2f> &streamLine) {
+	Vector2f c = (boundMax + boundMin) / 2;
+
+	for (card32 x = 0; x < dims[0]; ++x) {
+		for (card32 y = 0; y < dims[0]; ++y) {
+			Vector2f p = field.nodePosition(x, y);
+			Vector2f v = rotate(makeVector2f(0, 1), atan2(p[1] - c[1], p[0] - c[0]));
+			field.setNode(x, y, v);
+		}
+	}
+
+	return field;
+}
+
+vector<Vector2ui> AssignmentSix::streamLineToPixels(const ScalarField2 &field, const vector<Vector2f> &streamLine) {
 	vector<Vector2ui> pixels;
 
-	const Vector2ui &dims = Field.dims();
-	const Vector2f &boundMin = Field.boundMin();
-	const Vector2f &boundMax = Field.boundMax();
-	const float32 dx = (boundMax[0] - boundMin[0]) / dims[0];
-	const float32 dy = (boundMax[1] - boundMin[1]) / dims[1];
+	for (size_t i = 0; i < streamLine.size() - 1; ++i) {
+		const Vector2f &v0 = streamLine[i];
+		const Vector2f &v1 = streamLine[i+1];
 
-	for (const auto &v : streamLine) {
-		card32 x = (card32) round((v[0] - boundMin[0]) / dx);
-		card32 y = (card32) round((v[1] - boundMin[1]) / dy);
-		pixels.push_back(makeVector2ui(x, y));
+		vector<Vector2ui> line_pixels = lineToPixels(field, v0, v1);
+		std::copy(line_pixels.begin(), line_pixels.end(), back_inserter(pixels));
 	}
 
 	return pixels;
 }
 
 
-float32 AssignmentSix::smear(const ScalarField2 &field, const vector<Vector2ui> &pixels) {
-	// TODO
-	//for(size_t j=0; j<field.dims()[1]; j++)
-	//{
-		//for(size_t i=0; i<field.dims()[0]; i++)
-		//{
-			float32 sumVal = 0.0f;
+vector<Vector2ui> AssignmentSix::lineToPixels(const ScalarField2 &field, const Vector2f &v0, const Vector2f &v1) const {
+	vector<Vector2ui> points;
 
-			for(int k=0; k<pixels.size(); k++)
-			{
-			  sumVal += field.nodeScalar(pixels[k][0], pixels[k][1]);	
-			}
+	const Vector2f &bn = field.boundMin();
+	const Vector2f &bx = field.boundMax();
+	float32 dx = (bx[0] - bn[0]) / field.dims()[0];
+	float32 dy = (bx[1] - bn[1]) / field.dims()[1];
 
-			sumVal = sumVal/pixels.size();
-		//}
-	//}
-	return sumVal;
+	size_t steps = dx < dy ? abs(v1[0] - v0[0]) / dx : abs(v1[1] - v0[1]) / dy;
+	float32 d = min(dx, dy);
+
+	Vector2f direction = v1 - v0;
+	direction.normalize();
+	direction *= d;
+
+	for (size_t i = 0; i <= steps; ++i) {
+		Vector2ui node = field.closestNode(v0 + direction*i);
+		if (points.empty() || node != points.back()) {
+			points.push_back(node);
+		}
+	}
+
+	return points;
+}
+
+vector<float32> AssignmentSix::smear(const ScalarField2 &field, const vector<Vector2ui> &pixels) {
+	vector<float32> smears;
+
+	vector<float32> vals;
+	for (size_t i = 0; i < pixels.size(); ++i) {
+		vals.push_back(field.nodeScalar(pixels[i][0], pixels[i][1]));
+	}
+
+	card32 kernelSize = std::min<card32>(KernelSize, (card32) pixels.size());
+	card32 numVal = 0;
+	float32 sumVal = 0.0f;
+	for (size_t i = 0; i < kernelSize / 2; ++i) {
+		sumVal += vals[i];
+		numVal += 1;
+	}
+
+	smears.push_back(sumVal / numVal);
+
+	for (size_t i = 1; i < pixels.size(); ++i) {
+
+		if (i >= kernelSize / 2) {
+			sumVal -= vals[i - kernelSize / 2];
+			numVal -= 1;
+		}
+
+		if (i < pixels.size() - kernelSize / 2) {
+			sumVal += vals[i + kernelSize / 2];
+			numVal += 1;
+		}
+
+		smears.push_back(sumVal / numVal);
+	}
+
+	return smears;
+}
+
+Vector2f AssignmentSix::rotate(const Vector2f &f, float32 angle) const {
+	float32 x = f[0]*cos(angle) - f[1]*sin(angle);
+	float32 y = f[0]*sin(angle) + f[1]*cos(angle);
+
+	return makeVector2f(x, y);
 }
 
 vector<vector<Vector2f> > AssignmentSix::getStreamLines(const VectorField2 &field) {
@@ -293,15 +427,15 @@ AssignmentSix::Integrator(
 		Vector2f xp = (this->*Method)(xi, true);
 		if (IsTooSlow(xp)) {
 			output << "Stopped early after " << i << " steps. (Going too slow)\n";
-			return path;
+			break;
 		}
 
 		if (!Field.insideBounds(xp)) {
-			output << "Stopped early after " << i << " steps. (Outside bounds)\n";
-			return path;
+			bw.push_back(xp);
+			break;
 		}
 
-		path.push_back(xp);
+		bw.push_back(xp);
 		arcLength += (xp - xi).getSqrNorm();
 
 		/*
@@ -313,7 +447,7 @@ AssignmentSix::Integrator(
 		xi = xp;
 	}
 
-	path.push_back(xi);
+	bw.push_back(xi);
 	std::copy(bw.rbegin(), bw.rend(), back_inserter(path));
 
 	xi[0] = xstart;
@@ -328,7 +462,7 @@ AssignmentSix::Integrator(
 		}
 
 		if (!Field.insideBounds(xp)) {
-			output << "Stopped early after " << i << " steps. (Outside bounds)\n";
+			path.push_back(xp);
 			return path;
 		}
 

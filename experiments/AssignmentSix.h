@@ -22,13 +22,17 @@ private:
 	Vector2f RK4(Vector2f, bool integrateBackwards);
 	ScalarField2 enhanceContrast(ScalarField2);
 	float32 randomFloat(float32, float32);
+	ScalarField2 getRandomField(const Vector2f &boundMin, const Vector2f &boundMax, const Vector2ui &dims, bool grayscale);
+	VectorField2 getEllipseField(const Vector2f &boundMin, const Vector2f &boundMax, const Vector2ui &dims) const;
+	void drawStreamline(vector<Vector2f> path, const Vector4f &color);
 
-	ScalarField2 getRandomField(const Vector2f &lowerBounds, const Vector2f &upperBounds,
-								const Vector2ui &dims, bool grayscale);
+	Vector2f rotate(const Vector2f &, float32 angle) const;
 
 	vector< vector<Vector2f> > getStreamLines(const VectorField2 &field);
-	vector<Vector2ui> streamLineToPixels(const VectorField2 &field, const vector<Vector2f> &streamLine);
-	float32 smear(const ScalarField2 &field, const vector<Vector2ui> &pixels);
+	vector<Vector2ui> streamLineToPixels(const ScalarField2 &field, const vector<Vector2f> &streamLine);
+	vector<Vector2ui> lineToPixels(const ScalarField2 &field, const Vector2f &v0, const Vector2f &v1) const;
+	Vector2ui toPixel(float32 x, float32 y, const ScalarField2 &field) const;
+	vector<float32> smear(const ScalarField2 &field, const vector<Vector2ui> &pixels);
 	void resampleField();
 	//Attrs
 	ScalarField2 texture;
@@ -64,13 +68,15 @@ public:
 	string VectorfieldFilename;
 	string TextureFilename;
 
+	// The number sample points of the texture in both directions
+	card32 TextureResolution;
 	//RK
 	float RKStepSize;
 	int RKStep;
 
 	int32 SampleX;
 	int32 SampleY;
-	int32 KernelSize;
+	card32 KernelSize;
 	int32 Seed;
 
 	///Whether to draw the texture in RGB or grayscale
