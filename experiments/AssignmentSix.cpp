@@ -29,8 +29,6 @@ IMPLEMENT_GEOX_CLASS(AssignmentSix, 0)
 	ADD_BOOLEAN_PROP(AddStreamLines, 0);
 
 	ADD_SEPARATOR("Options")
-	ADD_INT32_PROP(SampleX, 0)
-	ADD_INT32_PROP(SampleY, 0)
 	ADD_CARD32_PROP(KernelSize, 0)
 	ADD_INT32_PROP(Seed, 0)
 	ADD_BOOLEAN_PROP(ColoredTexture, false)
@@ -53,7 +51,6 @@ AssignmentSix::AssignmentSix()
 {
 	viewer = NULL;
 
-	//VectorfieldFilename = "C:\\Users\\Eyob\\Desktop\\Sink.am";
 	VectorfieldFilename = "/home/simon/Git/vis15-group7/data/assignment06/ANoise2CT4.am";
 	TextureFilename = "/home/simon/Git/vis15-group7/data/assignment06/";
 	TextureResolution = makeVector2ui(64, 64);
@@ -81,34 +78,12 @@ AssignmentSix::AssignmentSix()
 
 AssignmentSix::~AssignmentSix() {}
 
-void AssignmentSix::resampleField() {
-	const auto &dims = Field.dims();
-	if (SampleX >= dims[0] && SampleY >= dims[1]) {
-		return;
-	}
-
-	const card32 minx = min((card32) SampleX, dims[0]);
-	const card32 miny = min((card32) SampleY, dims[1]);
-	VectorField2 resampledField = VectorField2();
-	resampledField.init(Field.boundMin(), Field.boundMax(), makeVector2ui(minx, miny));
-
-	for (card32 x = 0; x < minx; ++x) {
-		for(card32 y = 0; y < miny; ++y) {
-			resampledField.setNode(x, y, Field.node(x, y));
-		}
-	}
-
-	Field = resampledField;
-}
-
 void AssignmentSix::LoadVectorField() {
 
 	if (!Field.load(VectorfieldFilename))
 	{
 		error("Error loading field file " + VectorfieldFilename + "\n");
 	}
-
-	// resampleField();
 
 	VectorFieldAccessor = &AssignmentSix::FieldValue;
 }
@@ -150,8 +125,7 @@ void AssignmentSix::LIC() {
 
 	const Vector2ui &textureResolution = TextureResolution;
 
-	//VectorField2 vectorField = getEllipseField(makeVector2f(-5, -5), makeVector2f(5, 5), makeVector2ui(16, 16));
-	//Field = vectorField;
+	//const VectorField2 vectorField = getEllipseField(makeVector2f(-5, -5), makeVector2f(5, 5), makeVector2ui(16, 16));
 	const VectorField2 &vectorField = Field;
 
 	const Vector2ui &dims = vectorField.dims();

@@ -27,7 +27,6 @@ private:
 	ScalarField2 getRandomField(const Vector2f &boundMin, const Vector2f &boundMax, const Vector2ui &dims, bool grayscale);
 	VectorField2 getEllipseField(const Vector2f &boundMin, const Vector2f &boundMax, const Vector2ui &dims) const;
 	void LoadVectorField();
-	void resampleField();
 
 	// StreamLine helpers
 	bool IsTooSlow(Vector2f);
