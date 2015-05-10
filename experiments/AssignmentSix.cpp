@@ -57,9 +57,6 @@ AssignmentSix::AssignmentSix()
 	GrayScale = false;
 	AddStreamLines = false;
 
-	SampleX = 32;
-	SampleY = 32;
-
 	RKStepSize = 0.3;
 	RKStep = 30;
 

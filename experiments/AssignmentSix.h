@@ -79,8 +79,6 @@ public:
 	float RKStepSize;
 	int RKStep;
 
-	int32 SampleX;
-	int32 SampleY;
 	card32 KernelSize;
 	int32 Seed;
 
