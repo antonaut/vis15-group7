@@ -31,7 +31,7 @@ IMPLEMENT_GEOX_CLASS(AssignmentSix, 0)
 	ADD_SEPARATOR("Options")
 	ADD_CARD32_PROP(KernelSize, 0)
 	ADD_INT32_PROP(Seed, 0)
-	ADD_BOOLEAN_PROP(ColoredTexture, false)
+	ADD_BOOLEAN_PROP(ColoredTexture, 0)
 	ADD_NOARGS_METHOD(AssignmentSix::LoadVectorFieldAndRefresh)
 
 	ADD_NOARGS_METHOD(AssignmentSix::DrawTexture)
