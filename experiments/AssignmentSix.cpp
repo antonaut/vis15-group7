@@ -119,9 +119,11 @@ void AssignmentSix::LoadVectorFieldAndRefresh() {
 void AssignmentSix::DrawTexture() {
 	viewer->clear();
 
+	LoadVectorField();
+
 	srand((unsigned) Seed);
 
-	texture = getRandomField(makeVector2f(-5, -5), makeVector2f(5, 5), makeVector2ui(TextureResolution, TextureResolution), false);
+	texture = getRandomField(Field.boundMin(), Field.boundMax(), makeVector2ui(TextureResolution, TextureResolution), false);
 	viewer->setTextureGray(texture.getData());
 
 	viewer->refresh();
@@ -138,12 +140,13 @@ void AssignmentSix::LIC() {
 	viewer->clear();
 
 	srand((unsigned) Seed);
-	//LoadVectorField();
+	LoadVectorField();
 
 	const Vector2ui textureResolution = makeVector2ui(TextureResolution, TextureResolution);
 
-	VectorField2 vectorField = getEllipseField(makeVector2f(-5, -5), makeVector2f(5, 5), makeVector2ui(16, 16));
-	Field = vectorField;
+	//VectorField2 vectorField = getEllipseField(makeVector2f(-5, -5), makeVector2f(5, 5), makeVector2ui(16, 16));
+	//Field = vectorField;
+	const VectorField2 &vectorField = Field;
 
 	const Vector2ui &dims = vectorField.dims();
 	const Vector2f &boundMin = vectorField.boundMin();
@@ -177,10 +180,8 @@ void AssignmentSix::LIC() {
 			}
 
 			vector<Vector2ui> pixels = streamLineToPixels(randomField, streamLine);
-			const bool containsStartPixel = std::find(pixels.begin(), pixels.end(), makeVector2ui(x, y)) != pixels.end();
-			if (!containsStartPixel) {
-				pixels[pixels.size()/2] = makeVector2ui(x, y);
-			}
+
+			assert(std::find(pixels.begin(), pixels.end(), makeVector2ui(x, y)) != pixels.end());
 
 			assert(!pixels.empty());
 
@@ -300,11 +301,18 @@ vector<Vector2ui> AssignmentSix::lineToPixels(const ScalarField2 &field, const V
 	direction.normalize();
 	direction *= d;
 
+	points.push_back(field.closestNode(v0));
+
 	for (size_t i = 0; i <= steps; ++i) {
 		Vector2ui node = field.closestNode(v0 + direction*i);
-		if (points.empty() || node != points.back()) {
+		if (node != points.back()) {
 			points.push_back(node);
 		}
+	}
+
+	Vector2ui last_node = field.closestNode(v1);
+	if (points.back() != last_node) {
+		points.push_back(last_node);
 	}
 
 	return points;
@@ -351,14 +359,6 @@ Vector2f AssignmentSix::rotate(const Vector2f &f, float32 angle) const {
 	float32 y = f[0]*sin(angle) + f[1]*cos(angle);
 
 	return makeVector2f(x, y);
-}
-
-vector<vector<Vector2f> > AssignmentSix::getStreamLines(const VectorField2 &field) {
-	vector< vector<Vector2f> > streamLines;
-
-	streamLines.push_back(Integrator(32, &AssignmentSix::RK4, 1, 1));
-
-	return streamLines;
 }
 
 ScalarField2 AssignmentSix::enhanceContrast(ScalarField2 image) {
@@ -452,6 +452,8 @@ AssignmentSix::Integrator(
 
 	xi[0] = xstart;
 	xi[1] = ystart;
+
+	path.push_back(xi);
 
 	for (int i = 0; i < numberOfSteps; i++)
 	{
