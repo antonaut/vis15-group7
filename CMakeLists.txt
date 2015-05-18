@@ -150,6 +150,7 @@ SET(Experiment_SOURCES
     experiments/AssignmentThree.cpp
     experiments/AssignmentFour.cpp
 	experiments/AssignmentSix.cpp
+    experiments/AssignmentSeven.cpp
     experiments/ExampleSimple.cpp
     experiments/Experiment.cpp
 )

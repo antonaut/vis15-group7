@@ -359,7 +359,10 @@
     <ClCompile Include="..\experiments\ExampleSimple.cpp">
       <Filter>experiments</Filter>
     </ClCompile>
-    <ClCompile Include="AssignmentSix.cpp">
+    <ClCompile Include="..\experiments\AssignmentSix.cpp">
+      <Filter>experiments</Filter>
+    </ClCompile>
+    <ClCompile Include="..\experiments\AssignmentSeven.cpp">
       <Filter>experiments</Filter>
     </ClCompile>
   </ItemGroup>
@@ -656,7 +659,10 @@
     <ClInclude Include="..\experiments\ExampleSimple.h">
       <Filter>experiments</Filter>
     </ClInclude>
-    <ClInclude Include="AssignmentSix.h">
+    <ClInclude Include="..\experiments\AssignmentSix.h">
+      <Filter>experiments</Filter>
+    </ClInclude>
+    <ClInclude Include="..\experiments\AssignmentSeven.h">
       <Filter>experiments</Filter>
     </ClInclude>
   </ItemGroup>

@@ -105,12 +105,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\experiments\AssignmentFour.cpp" />
+    <ClCompile Include="..\experiments\AssignmentSeven.cpp" />
+    <ClCompile Include="..\experiments\AssignmentSix.cpp" />
     <ClCompile Include="..\experiments\AssignmentThree.cpp" />
     <ClCompile Include="..\experiments\ExampleExperimentFields.cpp" />
     <ClCompile Include="..\experiments\ExampleExperimentScatterPlot.cpp" />
     <ClCompile Include="..\experiments\ExampleSimple.cpp" />
     <ClCompile Include="..\system\misc\AMLoader.cpp" />
-    <ClCompile Include="AssignmentSix.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
@@ -216,6 +217,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\experiments\AssignmentFour.h" />
+    <ClInclude Include="..\experiments\AssignmentSeven.h" />
+    <ClInclude Include="..\experiments\AssignmentSix.h" />
     <ClInclude Include="..\experiments\AssignmentThree.h" />
     <ClInclude Include="..\experiments\ExampleExperimentFields.h" />
     <ClInclude Include="..\experiments\ExampleExperimentScatterPlot.h" />
@@ -223,7 +226,6 @@
     <ClInclude Include="..\math\Field2.hpp" />
     <ClInclude Include="..\math\GridData.hpp" />
     <ClInclude Include="..\system\misc\AMLoader.hpp" />
-    <ClInclude Include="AssignmentSix.h" />
     <ClInclude Include="stdafx.h" />
     <CustomBuild Include="..\geoX\GeoXMainWindow.h">
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">moc: compiling %(Filename).h</Message>

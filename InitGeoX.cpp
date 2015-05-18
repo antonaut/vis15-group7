@@ -38,6 +38,7 @@
 #include "AssignmentThree.h"
 #include "AssignmentFour.h"
 #include "AssignmentSix.h"
+#include "AssignmentSeven.h"
 // ...
 
 //---------------------------------------------------------------------------
@@ -74,6 +75,7 @@ void init()
     AssignmentThree::init(Experiment::getClass());
     AssignmentFour::init(Experiment::getClass());
 	AssignmentSix::init(Experiment::getClass());
+    AssignmentSeven::init(Experiment::getClass());
     // ...
 }
 
@@ -107,5 +109,6 @@ void shutdown()
     AssignmentThree::shutdown();
     AssignmentFour::shutdown();
 	AssignmentSix::shutdown();
+    AssignmentSeven::shutdown();
     // ...
 }
