@@ -15,6 +15,10 @@
 #define IS_POW_2(x) (((x) != 0) && (((x) & ((x) - 1)) == 0))
 #endif
 
+#ifdef _WIN32
+#define isnan(x) (_isnan(x) != 0)
+#endif
+
 IMPLEMENT_GEOX_CLASS(AssignmentSix, 0)
 {
 	BEGIN_CLASS_INIT(AssignmentSix);
