@@ -6,6 +6,7 @@
 #include "LinearAlgebra.h"
 #include "Field2.hpp"
 #include "GLGeometryViewer.h"
+#include <random>
 //---------------------------------------------------------------------------
 
 
@@ -23,10 +24,11 @@ private:
 	// Drawing help methods
 	void drawStreamline(vector<Vector2f> path, const Vector4f &color);
 
-	// VectorField creators
+	// Field creators
 	ScalarField2 getRandomField(const Vector2f &boundMin, const Vector2f &boundMax, const Vector2ui &dims, bool grayscale);
 	VectorField2 getEllipseField(const Vector2f &boundMin, const Vector2f &boundMax, const Vector2ui &dims) const;
 	void LoadVectorField();
+	void LoadScalarField();
 
 	// StreamLine helpers
 	bool IsTooSlow(Vector2f);
@@ -42,6 +44,7 @@ private:
 
 	//Attrs
 	ScalarField2 texture;
+	std::mt19937_64 mt;
 
 	///The method used to get vector field data.
 	Vector2f(AssignmentSeven::*VectorFieldAccessor)(Vector2f, bool);
@@ -56,6 +59,8 @@ public:
 	//Methods
 public:
 	void LoadVectorFieldAndRefresh();
+	void LoadScalarFieldAndRefresh();
+	void ShowExtremePoints();
 	void DrawTexture();
 	void EnhanceTexture();
 	void FastLIC();
@@ -65,11 +70,14 @@ public:
 
 	//Attributes
 public:
-	///The loaded field
+	///The loaded fields
 	VectorField2 Field;
 
-	///File name of the vector field
+	ScalarField2 SField;
+
+	///File name of the vector- and scalar fields
 	string VectorfieldFilename;
+	string ScalarfieldFilename;
 	string TextureFilename;
 
 	// The number sample points of the texture in both directions

@@ -10,6 +10,7 @@
 #include <limits>
 #include <vector>
 #include <algorithm>
+#include <random>
 
 #ifndef IS_POW_2
 #define IS_POW_2(x) (((x) != 0) && (((x) & ((x) - 1)) == 0))
@@ -25,23 +26,28 @@ IMPLEMENT_GEOX_CLASS(AssignmentSeven, 0)
 
 	ADD_SEPARATOR("Vectorfield")
 	ADD_STRING_PROP(VectorfieldFilename, 0)
+	ADD_NOARGS_METHOD(AssignmentSeven::LoadVectorFieldAndRefresh)
+
+	ADD_SEPARATOR("Scalarfield")
+	ADD_STRING_PROP(ScalarfieldFilename, 0)
+	ADD_NOARGS_METHOD(AssignmentSeven::LoadScalarFieldAndRefresh)
+
+	ADD_SEPARATOR("Critical Points")
+	ADD_NOARGS_METHOD(AssignmentSeven::ShowExtremePoints)
 
 	ADD_SEPARATOR("Texture");
 	ADD_STRING_PROP(TextureFilename, 0)
 	ADD_VECTOR2I_PROP(TextureResolution, 0);
 	ADD_BOOLEAN_PROP(GrayScale, 0);
 	ADD_BOOLEAN_PROP(AddStreamLines, 0);
-
-	ADD_SEPARATOR("Options")
+	ADD_NOARGS_METHOD(AssignmentSeven::DrawTexture)
+	ADD_NOARGS_METHOD(AssignmentSeven::EnhanceTexture)
+	
+	ADD_SEPARATOR("LIC Options")
 	ADD_CARD32_PROP(KernelSize, 0)
 	ADD_INT32_PROP(Seed, 0)
 	ADD_BOOLEAN_PROP(ColoredTexture, 0)
-	ADD_NOARGS_METHOD(AssignmentSeven::LoadVectorFieldAndRefresh)
-
-	ADD_NOARGS_METHOD(AssignmentSeven::DrawTexture)
-	ADD_NOARGS_METHOD(AssignmentSeven::EnhanceTexture)
 	ADD_NOARGS_METHOD(AssignmentSeven::FastLIC)
-
 
 }
 
@@ -55,8 +61,11 @@ AssignmentSeven::AssignmentSeven()
 {
 	viewer = NULL;
 
-	VectorfieldFilename = "/home/simon/Git/vis15-group7/data/assignment06/Cylinderclose2CT10.am";
-	TextureFilename = "/home/simon/Git/vis15-group7/data/assignment06/";
+	VectorfieldFilename = "../data/assignment07/Data/Vector/Center16x16.am";
+
+	ScalarfieldFilename = "../data/assignment07/Data/Scalar/NoisyHill.am";
+
+	TextureFilename = "../data/assignment06/";
 	TextureResolution = makeVector2ui(64, 64);
 	GrayScale = false;
 	AddStreamLines = false;
@@ -79,6 +88,90 @@ AssignmentSeven::AssignmentSeven()
 
 AssignmentSeven::~AssignmentSeven() {}
 
+void AssignmentSeven::ShowExtremePoints() {
+
+	const float32 ZERO_THRESHOLD = 1E-8;
+
+	vector< Vector2f > sources;
+	vector< Vector2f > repfocs;
+	vector< Vector2f > saddles;
+	vector< Vector2f > centers;
+	vector< Vector2f > sinks;
+	vector< Vector2f > attfocs;
+
+	auto dims = Field.dims();
+
+	for (card32 i = 0; i < dims[0]-1; ++i) {
+		for (card32 j = 0; j < dims[1]-1; ++j) {
+			output << "Processing node(" << i << ", " << j << ").\n";
+			Vector2f xy = Field.node(i, j);
+			Vector2f xxy = Field.node(i+1, j);
+			Vector2f xyy = Field.node(i, j + 1);
+			Vector2f xxyy = Field.node(i + 1, j + 1);
+			bool extremePointInSquare = false;
+			for (auto d = 0; d < 2; ++d) {
+				float32 v1 = xy[d];
+				float32 v2 = xxy[d];
+				float32 v3 = xyy[d];
+				float32 v4 = xxyy[d];
+				bool b1 = signbit(v1);
+				bool b2 = signbit(v2);
+				bool b3 = signbit(v3);
+				bool b4 = signbit(v4);
+
+				int minusSigns = 0;
+				if (b1) ++minusSigns;
+				if (b2) ++minusSigns;
+				if (b3) ++minusSigns;
+				if (b4) ++minusSigns;
+
+				output << "nsigns: " << minusSigns << "\n";
+				if (minusSigns == 1 || minusSigns == 3 ||
+					(b1 == b3 && b2 == b4 && b1 != b2)) {
+					extremePointInSquare = true;
+					break;
+				}
+			}
+
+			// Using Newton Rhapson method for several dimensions
+			if (extremePointInSquare) {
+				// Let's find that extreme point.
+				// Start from point xy and head towards middle
+				Vector2f point = Field.nodePosition(i, j);
+				int32 maxiter = 10;
+				Matrix2f jac;
+				Matrix2f jacInv;
+				while (Field.sample(point).getSqrNorm() < ZERO_THRESHOLD && --maxiter != 0) {
+					jac = Field.sampleJacobian(xy);
+					jacInv = invertMatrix(jac);
+					point = point - jacInv*Field.sample(point);
+				}
+				output << "Found extreme point: " << point << "\n";
+				viewer->addPoint(point);
+
+				// Time to classify!
+				Matrix2f eigenVectors;
+				Vector2f eigenRealValues;
+				Vector2f eigenImagValues;
+				jac.solveEigenProblem(eigenRealValues, eigenImagValues, eigenVectors);
+			}
+		}
+		viewer->refresh();
+	}
+
+	/*	
+		Matrix2f jac = Field.sampleJacobian();
+		jac.solveEigenProblem();
+		jac. 
+	*/
+
+	// Decompose into blocks of four
+
+	// Return all min/max/zero values
+	viewer->refresh();
+}
+
+
 void AssignmentSeven::LoadVectorField() {
 
 	if (!Field.load(VectorfieldFilename))
@@ -98,12 +191,24 @@ void AssignmentSeven::LoadVectorFieldAndRefresh() {
 	viewer->refresh();
 }
 
+void AssignmentSeven::LoadScalarField() {
+	if (!SField.load(ScalarfieldFilename)) {
+		error("Error loading file" + ScalarfieldFilename + "\n");
+	}
+}
+
+void AssignmentSeven::LoadScalarFieldAndRefresh() {
+	viewer->clear();
+	LoadScalarField();
+	viewer->refresh();
+}
+
+
 void AssignmentSeven::DrawTexture() {
 	viewer->clear();
 
 	LoadVectorField();
 
-	srand((unsigned) Seed);
 
 	texture = getRandomField(Field.boundMin(), Field.boundMax(), TextureResolution, GrayScale);
 	viewer->setTextureGray(texture.getData());
@@ -121,7 +226,7 @@ void AssignmentSeven::EnhanceTexture() {
 void AssignmentSeven::FastLIC() {
 	viewer->clear();
 
-	srand((unsigned) Seed);
+	mt.seed(Seed);
 	LoadVectorField();
 
 	const Vector2ui &textureResolution = TextureResolution;
@@ -502,8 +607,6 @@ Vector2f AssignmentSeven::RK4(Vector2f xi, bool integrateBackwards)
 }
 
 float32 AssignmentSeven::randomFloat(float32 a, float32 b) {
-	float32 random = ((float32)rand()) / (float32)RAND_MAX;
-	float32 diff = b - a;
-	float32 r = random * diff;
-	return a + r;
+	std::uniform_real_distribution<float32> dist(a, b);
+	return dist(mt);
 }
