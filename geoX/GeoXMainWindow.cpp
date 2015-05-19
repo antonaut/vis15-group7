@@ -63,6 +63,8 @@ void GeoXMainWindow::initWindow()
    initTimer = NULL;
    ui.dockOutput->setMaximumHeight(10000);
    ui.dockObjectView->setMinimumWidth(50);
+   QString assName = "AssignmentSeven";
+   this->sltExperimentChanged(assName);
 }
 
 

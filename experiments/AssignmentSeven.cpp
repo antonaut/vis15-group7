@@ -103,7 +103,7 @@ void AssignmentSeven::ShowExtremePoints() {
 
 	for (card32 i = 0; i < dims[0]-1; ++i) {
 		for (card32 j = 0; j < dims[1]-1; ++j) {
-			output << "Processing node(" << i << ", " << j << ").\n";
+			//output << "Processing node(" << i << ", " << j << ").\n";
 			Vector2f xy = Field.node(i, j);
 			Vector2f xxy = Field.node(i+1, j);
 			Vector2f xyy = Field.node(i, j + 1);
@@ -125,7 +125,7 @@ void AssignmentSeven::ShowExtremePoints() {
 				if (b3) ++minusSigns;
 				if (b4) ++minusSigns;
 
-				output << "nsigns: " << minusSigns << "\n";
+				//output << "nsigns: " << minusSigns << "\n";
 				if (minusSigns == 1 || minusSigns == 3 ||
 					(b1 == b3 && b2 == b4 && b1 != b2)) {
 					extremePointInSquare = true;
@@ -146,7 +146,7 @@ void AssignmentSeven::ShowExtremePoints() {
 					jacInv = invertMatrix(jac);
 					point = point - jacInv*Field.sample(point);
 				}
-				output << "Found extreme point: " << point << "\n";
+				output << "Found extreme point: " << point << " after " << maxiter << " iterations.\n";
 				viewer->addPoint(point);
 
 				// Time to classify!
