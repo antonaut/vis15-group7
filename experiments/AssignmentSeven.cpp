@@ -61,7 +61,7 @@ AssignmentSeven::AssignmentSeven()
 {
 	viewer = NULL;
 
-	VectorfieldFilename = "../data/assignment07/Data/Vector/Center16x16.am";
+	VectorfieldFilename = "../data/assignment07/Data/Vector/ANoise2CT4.am";
 
 	ScalarfieldFilename = "../data/assignment07/Data/Scalar/NoisyHill.am";
 
@@ -76,7 +76,7 @@ AssignmentSeven::AssignmentSeven()
 	VectorFieldAccessor = &AssignmentSeven::FieldValue;
 
 	arcLength = 0.0f;
-
+	ArrowScale = 0.2f;
 	KernelSize = 32;
 
 	Seed = 1;
@@ -88,6 +88,27 @@ AssignmentSeven::AssignmentSeven()
 
 AssignmentSeven::~AssignmentSeven() {}
 
+void AssignmentSeven::DrawVectorFieldHelper() {
+	//Draw vector directions (constant length)
+	for (float32 x = Field.boundMin()[0]; x <= Field.boundMax()[0]; x += 0.2)
+	{
+		for (float32 y = Field.boundMin()[1]; y <= Field.boundMax()[1]; y += 0.2)
+		{
+			Vector2f vec = Field.sample(x, y);
+
+			float32 x2 = x + ArrowScale*vec[0];
+			float32 y2 = y + ArrowScale*vec[1];
+
+			viewer->addLine(x, y, x2, y2);
+
+			Point2D current = Point2D(x2,y2);
+			current.color = makeVector4f(1, 1, 1, 1);
+			viewer->addPoint(current);
+			
+		}
+	}
+}
+
 void AssignmentSeven::ShowExtremePoints() {
 
 	const float32 ZERO_THRESHOLD = 1E-8;
@@ -98,16 +119,17 @@ void AssignmentSeven::ShowExtremePoints() {
 	vector< Vector2f > centers;
 	vector< Vector2f > sinks;
 	vector< Vector2f > attfocs;
+	DrawVectorFieldHelper();
+	float32 dx = abs(Field.boundMin()[0] - Field.boundMax()[0]) / 10.0;
+	float32 dy = abs(Field.boundMin()[1] - Field.boundMax()[1]) / 10.0;
 
-	auto dims = Field.dims();
-
-	for (card32 i = 0; i < dims[0]-1; ++i) {
-		for (card32 j = 0; j < dims[1]-1; ++j) {
-			//output << "Processing node(" << i << ", " << j << ").\n";
-			Vector2f xy = Field.node(i, j);
-			Vector2f xxy = Field.node(i+1, j);
-			Vector2f xyy = Field.node(i, j + 1);
-			Vector2f xxyy = Field.node(i + 1, j + 1);
+	for (float32 j = Field.boundMin()[1]; j <= Field.boundMax()[1] - dy; j += (dy)) {
+		for (float32 i = Field.boundMin()[0]; i <= Field.boundMax()[0]-dx; i += (dx)) {
+			output << "Processing node(" << i << ", " << j << ").\n";
+			Vector2f xy = Field.sample(i, j);
+			Vector2f xxy = Field.sample(i + dx, j);
+			Vector2f xyy = Field.sample(i, j + dy);
+			Vector2f xxyy = Field.sample(i + dx, j + dy);
 			bool extremePointInSquare = false;
 			for (auto d = 0; d < 2; ++d) {
 				float32 v1 = xy[d];
@@ -119,55 +141,73 @@ void AssignmentSeven::ShowExtremePoints() {
 				bool b3 = signbit(v3);
 				bool b4 = signbit(v4);
 
+				output << "[ " << (b1 ? "-" : "+") << " " << (b2 ? "-" : "+") << "\n  " << (b3 ? "-" : "+") << " " << (b4 ? "-" : "+") << " ]\n";
 				int minusSigns = 0;
 				if (b1) ++minusSigns;
 				if (b2) ++minusSigns;
 				if (b3) ++minusSigns;
 				if (b4) ++minusSigns;
 
-				//output << "nsigns: " << minusSigns << "\n";
-				if (minusSigns == 1 || minusSigns == 3 ||
-					(b1 == b3 && b2 == b4 && b1 != b2)) {
+				output << "nsigns: " << minusSigns << "\n";
+				if (minusSigns == 1 ||
+					minusSigns == 3 /*||
+					(b1 == b3 && b2 == b4 && b1 != b2) ||
+					(b1 != b3 && b2 != b4 && b1 == b2)*/
+					) {
 					extremePointInSquare = true;
 					break;
 				}
 			}
 
-			// Using Newton Rhapson method for several dimensions
 			if (extremePointInSquare) {
 				// Let's find that extreme point.
-				// Start from point xy and head towards middle
-				Vector2f point = Field.nodePosition(i, j);
-				int32 maxiter = 10;
+				// Start from point xy and head towards middelkth.
+				Vector2f point = makeVector2f(i, j);
+				int32 iter = 0;
 				Matrix2f jac;
 				Matrix2f jacInv;
-				while (Field.sample(point).getSqrNorm() < ZERO_THRESHOLD && --maxiter != 0) {
-					jac = Field.sampleJacobian(xy);
-					jacInv = invertMatrix(jac);
-					point = point - jacInv*Field.sample(point);
-				}
-				output << "Found extreme point: " << point << " after " << maxiter << " iterations.\n";
-				viewer->addPoint(point);
+				output << "Start: " << point << "\n";
+				float32 norm = std::numeric_limits<float32>::max();
 
-				// Time to classify!
-				Matrix2f eigenVectors;
-				Vector2f eigenRealValues;
-				Vector2f eigenImagValues;
-				jac.solveEigenProblem(eigenRealValues, eigenImagValues, eigenVectors);
+				Vector2f dp;
+				while (norm > ZERO_THRESHOLD && iter < 10) {
+					Point2D current = Point2D(point[0], point[1]);
+					current.color = makeVector4f((10.0-iter)/10.0, iter/10.0, 0.3, 1);
+					current.size = 10;
+					viewer->addPoint(current);
+					viewer->refresh();
+
+					jac = Field.sampleJacobian(point);
+					jacInv = invertMatrix(jac);
+					dp = jacInv*Field.sample(point);
+					point = point - dp;
+					if (!Field.insideBounds(point)){
+						iter = 20;
+						break;
+					}
+					norm = point.getSqrNorm();
+					iter++;
+					output << "point: " << point << ", dp: " << dp << ", det(J): " << jac.getDeterminant() << ", norm(dp): " << norm << "\n";
+				}
+
+				if (iter < 10) {
+					output << "Found extreme point: " << point << " after " << iter << " iterations.\n";
+
+					Point2D pt(point[0], point[1]);
+					pt.color = makeVector4f(1, 1, 1, 1);
+					pt.size = 6;
+					viewer->addPoint(pt);
+
+					// Time to classify!
+					Matrix2f eigenVectors;
+					Vector2f eigenRealValues;
+					Vector2f eigenImagValues;
+					jac.solveEigenProblem(eigenRealValues, eigenImagValues, eigenVectors);
+				}
+				viewer->refresh();
 			}
 		}
-		viewer->refresh();
 	}
-
-	/*	
-		Matrix2f jac = Field.sampleJacobian();
-		jac.solveEigenProblem();
-		jac. 
-	*/
-
-	// Decompose into blocks of four
-
-	// Return all min/max/zero values
 	viewer->refresh();
 }
 

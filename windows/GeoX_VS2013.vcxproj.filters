@@ -665,6 +665,7 @@
     <ClInclude Include="..\experiments\AssignmentSeven.h">
       <Filter>experiments</Filter>
     </ClInclude>
+    <ClInclude Include="resource1.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\images\ArrowDropDownSmall.png">

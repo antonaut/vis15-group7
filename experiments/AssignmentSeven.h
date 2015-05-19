@@ -23,6 +23,7 @@ private:
 
 	// Drawing help methods
 	void drawStreamline(vector<Vector2f> path, const Vector4f &color);
+	void DrawVectorFieldHelper(void);
 
 	// Field creators
 	ScalarField2 getRandomField(const Vector2f &boundMin, const Vector2f &boundMax, const Vector2ui &dims, bool grayscale);
@@ -45,7 +46,7 @@ private:
 	//Attrs
 	ScalarField2 texture;
 	std::mt19937_64 mt;
-
+	float32 ArrowScale;
 	///The method used to get vector field data.
 	Vector2f(AssignmentSeven::*VectorFieldAccessor)(Vector2f, bool);
 
