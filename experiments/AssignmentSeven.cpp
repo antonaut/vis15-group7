@@ -73,7 +73,7 @@ AssignmentSeven::AssignmentSeven()
 	GrayScale = false;
 	AddStreamLines = false;
 
-	RKStepSize = 0.3;
+	RKStepSize = 0.05;
 	RKStep = 30;
 
 	VectorFieldAccessor = &AssignmentSeven::FieldValue;
@@ -213,6 +213,7 @@ void AssignmentSeven::ShowExtremePoints() {
 						// Saddle
 						pt.color = makeVector4f(1, 1, 0, 1);
 						saddles.push_back(point);
+						drawSaddleStreamLines(point, eigenVectors);
 					}
 					else if (r1 > 0 && r2 > 0 && equals(i1, 0) && equals(i2, 0)) {
 						// Repelling node
@@ -247,6 +248,18 @@ void AssignmentSeven::ShowExtremePoints() {
 	}
 
 	viewer->refresh();
+}
+
+void AssignmentSeven::drawSaddleStreamLines(const Vector2f &point, const Matrix2f &eigenVectors) {
+	auto sline1 = Integrator(100, &AssignmentSeven::RK4, point[0] + eigenVectors[0][0]/100, point[1] + eigenVectors[0][1]/100);
+	auto sline2 = Integrator(100, &AssignmentSeven::RK4, point[0] - eigenVectors[0][0]/100, point[1] - eigenVectors[0][1]/100);
+	auto sline3 = Integrator(100, &AssignmentSeven::RK4, point[0] + eigenVectors[1][0]/100, point[1] + eigenVectors[1][1]/100);
+	auto sline4 = Integrator(100, &AssignmentSeven::RK4, point[0] - eigenVectors[1][0]/100, point[1] - eigenVectors[1][1]/100);
+
+	drawStreamline(sline1, makeVector4f(1,1,1,1));
+	drawStreamline(sline2, makeVector4f(1,1,1,1));
+	drawStreamline(sline3, makeVector4f(1,1,1,1));
+	drawStreamline(sline4, makeVector4f(1,1,1,1));
 }
 
 bool AssignmentSeven::equals(float32 a, float32 b) const {
@@ -414,10 +427,10 @@ void AssignmentSeven::drawStreamline(vector<Vector2f> path, const Vector4f &colo
 	for(size_t i = 1; i < arraySize; ++i) {
 		p2 = path[i];
 		viewer->addLine(p1[0], p1[1], p2[0], p2[1], color);
-		viewer->addPoint(p1);
+		//viewer->addPoint(p1);
 		p1 = p2;
 	}
-	viewer->addPoint(path[arraySize - 1]);
+	//viewer->addPoint(path[arraySize - 1]);
 }
 
 ScalarField2 AssignmentSeven::getRandomField(const Vector2f &boundMin, const Vector2f &boundMax,

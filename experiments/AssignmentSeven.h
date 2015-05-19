@@ -24,6 +24,7 @@ private:
 
 	// Drawing help methods
 	void drawStreamline(vector<Vector2f> path, const Vector4f &color);
+	void drawSaddleStreamLines(const Vector2f &point, const Matrix2f &m);
 	void DrawVectorFieldHelper(void);
 	void DrawScalarField(const ScalarField2 &field);
 
