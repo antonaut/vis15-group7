@@ -49,6 +49,8 @@ IMPLEMENT_GEOX_CLASS(AssignmentSeven, 0)
 	ADD_BOOLEAN_PROP(ColoredTexture, 0)
 	ADD_NOARGS_METHOD(AssignmentSeven::FastLIC)
 
+	ADD_NOARGS_METHOD(AssignmentSeven::ScalarSkeleton)
+
 }
 
 QWidget* AssignmentSeven::createViewer()
@@ -63,7 +65,8 @@ AssignmentSeven::AssignmentSeven()
 
 	VectorfieldFilename = "../data/assignment07/Data/Vector/ANoise2CT4.am";
 
-	ScalarfieldFilename = "../data/assignment07/Data/Scalar/NoisyHill.am";
+	VectorfieldFilename = "/home/simon/Git/vis15-group7/data/assignment07/Data/Vector/ANoise2CT4.am";
+	ScalarfieldFilename = "/home/simon/Git/vis15-group7/data/assignment07/Data/Scalar/NoisyHill.am";
 
 	TextureFilename = "../data/assignment06/";
 	TextureResolution = makeVector2ui(64, 64);
@@ -119,13 +122,13 @@ void AssignmentSeven::ShowExtremePoints() {
 	vector< Vector2f > centers;
 	vector< Vector2f > sinks;
 	vector< Vector2f > attfocs;
-	DrawVectorFieldHelper();
+	//DrawVectorFieldHelper();
 	float32 dx = abs(Field.boundMin()[0] - Field.boundMax()[0]) / 10.0;
 	float32 dy = abs(Field.boundMin()[1] - Field.boundMax()[1]) / 10.0;
 
 	for (float32 j = Field.boundMin()[1]; j <= Field.boundMax()[1] - dy; j += (dy)) {
 		for (float32 i = Field.boundMin()[0]; i <= Field.boundMax()[0]-dx; i += (dx)) {
-			output << "Processing node(" << i << ", " << j << ").\n";
+			//output << "Processing node(" << i << ", " << j << ").\n";
 			Vector2f xy = Field.sample(i, j);
 			Vector2f xxy = Field.sample(i + dx, j);
 			Vector2f xyy = Field.sample(i, j + dy);
@@ -141,7 +144,7 @@ void AssignmentSeven::ShowExtremePoints() {
 				bool b3 = signbit(v3);
 				bool b4 = signbit(v4);
 
-				output << "[ " << (b1 ? "-" : "+") << " " << (b2 ? "-" : "+") << "\n  " << (b3 ? "-" : "+") << " " << (b4 ? "-" : "+") << " ]\n";
+				//output << "[ " << (b1 ? "-" : "+") << " " << (b2 ? "-" : "+") << "\n  " << (b3 ? "-" : "+") << " " << (b4 ? "-" : "+") << " ]\n";
 				int minusSigns = 0;
 				if (b1) ++minusSigns;
 				if (b2) ++minusSigns;
@@ -166,7 +169,7 @@ void AssignmentSeven::ShowExtremePoints() {
 				int32 iter = 0;
 				Matrix2f jac;
 				Matrix2f jacInv;
-				output << "Start: " << point << "\n";
+				//output << "Start: " << point << "\n";
 				float32 norm = std::numeric_limits<float32>::max();
 
 				Vector2f dp;
@@ -174,8 +177,8 @@ void AssignmentSeven::ShowExtremePoints() {
 					Point2D current = Point2D(point[0], point[1]);
 					current.color = makeVector4f((10.0-iter)/10.0, iter/10.0, 0.3, 1);
 					current.size = 10;
-					viewer->addPoint(current);
-					viewer->refresh();
+					//viewer->addPoint(current);
+					//viewer->refresh();
 
 					jac = Field.sampleJacobian(point);
 					jacInv = invertMatrix(jac);
@@ -187,28 +190,67 @@ void AssignmentSeven::ShowExtremePoints() {
 					}
 					norm = point.getSqrNorm();
 					iter++;
-					output << "point: " << point << ", dp: " << dp << ", det(J): " << jac.getDeterminant() << ", norm(dp): " << norm << "\n";
+					//output << "point: " << point << ", dp: " << dp << ", det(J): " << jac.getDeterminant() << ", norm(dp): " << norm << "\n";
 				}
 
-				if (iter < 10) {
+				if (iter <= 10) {
 					output << "Found extreme point: " << point << " after " << iter << " iterations.\n";
 
 					Point2D pt(point[0], point[1]);
-					pt.color = makeVector4f(1, 1, 1, 1);
-					pt.size = 6;
-					viewer->addPoint(pt);
 
 					// Time to classify!
 					Matrix2f eigenVectors;
 					Vector2f eigenRealValues;
 					Vector2f eigenImagValues;
 					jac.solveEigenProblem(eigenRealValues, eigenImagValues, eigenVectors);
+
+					float32 r1 = eigenRealValues[0];
+					float32 r2 = eigenRealValues[1];
+					float32 i1 = eigenImagValues[0];
+					float32 i2 = eigenImagValues[1];
+
+					if ((r1 < 0 && r2 > 0) || (r1 > 0 && r2 < 0) && equals(i1, 0) && equals(i2, 0)) {
+						// Saddle
+						pt.color = makeVector4f(1, 1, 0, 1);
+						saddles.push_back(point);
+					}
+					else if (r1 > 0 && r2 > 0 && equals(i1, 0) && equals(i2, 0)) {
+						// Repelling node
+						pt.color = makeVector4f(1, 0, 0, 1);
+					}
+					else if (equals(r1, r2) && r1 > 0 && equals(i1, -i2) && !equals(i1, 0)) {
+						// Repelling focus
+						pt.color = makeVector4f(1, 0.5f, 0, 1);
+					}
+					else if (equals(r1, r2) && equals(r1, 0) && equals(i1, -i2) && !equals(i1, 0)) {
+						// Center
+						pt.color = makeVector4f(0, 1, 0, 1);
+					}
+					else if (equals(r1, r2) && r1 < 0 && equals(i1, -i2) && !equals(i1, 0)) {
+						// Attracting focus
+						pt.color = makeVector4f(0.5f, 1, 0, 1);
+					}
+					else if (r1 < 0 && r2 < 0 && equals(i1, 0) && equals(i2, 0)) {
+						// Attracting node
+						pt.color = makeVector4f(0, 0, 1, 1);
+					}
+					else {
+						output << "r1, r2, i1, i2: " << r1 << ", " << r2 << ", " << i1 << ", " << i2 << "\n";
+						pt.color = makeVector4f(1, 1, 1, 1);
+					}
+
+					pt.size = 6;
+					viewer->addPoint(pt);
 				}
-				viewer->refresh();
 			}
 		}
 	}
+
 	viewer->refresh();
+}
+
+bool AssignmentSeven::equals(float32 a, float32 b) const {
+	return abs(a - b) < 0.001;
 }
 
 
@@ -543,6 +585,57 @@ ScalarField2 AssignmentSeven::enhanceContrast(ScalarField2 image) {
 bool AssignmentSeven::IsTooSlow(Vector2f vec) {
 	float threshold = 1E-4;
 	return vec.getSqrNorm() < threshold;
+}
+
+void AssignmentSeven::DrawScalarField(const ScalarField2 &field) {
+	float32 minValue = field.nodeScalar(0, 0);
+	float32 maxValue = field.nodeScalar(0, 0);
+
+	ScalarField2 renderField = ScalarField2();
+	renderField.init(field.boundMin(), field.boundMax(), field.dims());
+
+	for (card32 row = 0; row < field.dims()[0]; ++row) {
+		for (card32 col = 0; col < field.dims()[1]; ++col) {
+			minValue = min(minValue, field.nodeScalar(row, col));
+			maxValue = max(maxValue, field.nodeScalar(row, col));
+		}
+	}
+
+	for (card32 row = 0; row < field.dims()[0]; ++row) {
+		for (card32 col = 0; col < field.dims()[1]; ++col) {
+			float32 data = (field.nodeScalar(row, col) - minValue) / (maxValue - minValue);
+			renderField.setNodeScalar(row, col, data);
+		}
+	}
+
+	viewer->setTextureGray(renderField.getData());
+}
+
+void AssignmentSeven::ScalarSkeleton() {
+	viewer->clear();
+
+	LoadScalarField();
+
+	DrawScalarField(SField);
+
+	Field.init(SField.boundMin(), SField.boundMax(), SField.dims());
+	const card32 nx = Field.dims()[0];
+	const card32 ny = Field.dims()[1];
+	const float dx = (Field.boundMax()[0] - Field.boundMin()[0]) / nx;
+	const float dy = (Field.boundMax()[1] - Field.boundMin()[1]) / ny;
+	for (card32 xi = 0; xi < nx; ++xi) {
+		float32 x = SField.boundMin()[0] + xi * dx;
+		for (card32 yi = 0; yi < ny; ++yi) {
+			float32 y = SField.boundMin()[1] + yi * dy;
+			Vector2f grad = SField.sampleGradient(x, y);
+			//output << "grad: " << grad[0] << ", " << grad[1] << "\n";
+			Field.setNode(xi, yi, grad);
+		}
+	}
+
+	viewer->refresh();
+
+	ShowExtremePoints();
 }
 
 /**

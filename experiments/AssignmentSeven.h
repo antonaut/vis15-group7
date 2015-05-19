@@ -20,10 +20,12 @@ private:
 	// Help methods
 	float32 randomFloat(float32, float32);
 	Vector2f rotate(const Vector2f &, float32 angle) const;
+	bool equals(float32, float32) const;
 
 	// Drawing help methods
 	void drawStreamline(vector<Vector2f> path, const Vector4f &color);
 	void DrawVectorFieldHelper(void);
+	void DrawScalarField(const ScalarField2 &field);
 
 	// Field creators
 	ScalarField2 getRandomField(const Vector2f &boundMin, const Vector2f &boundMax, const Vector2ui &dims, bool grayscale);
@@ -66,6 +68,7 @@ public:
 	void EnhanceTexture();
 	void FastLIC();
 	void Coloring();
+	void ScalarSkeleton();
 
 	virtual QWidget* createViewer();
 
